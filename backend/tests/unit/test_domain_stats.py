@@ -26,9 +26,18 @@ def test_starting_stats_are_reproducible_with_seed() -> None:
 @pytest.mark.parametrize(
     ("delta", "expected"),
     [
-        (StatsDelta(CASH=10, MORALE=-5, BOARD=0, FACE=None), Stats(CASH=60, MORALE=45, BOARD=50, FACE=60)),
-        (StatsDelta(CASH=-20, MORALE=-80, BOARD=-1, FACE=-100), Stats(CASH=30, MORALE=0, BOARD=49, FACE=0)),
-        (StatsDelta(CASH=1000, MORALE=1000, BOARD=1000, FACE=1000), Stats(CASH=100, MORALE=100, BOARD=100, FACE=100)),
+        (
+            StatsDelta(CASH=10, MORALE=-5, BOARD=0, FACE=None),
+            Stats(CASH=60, MORALE=45, BOARD=50, FACE=60),
+        ),
+        (
+            StatsDelta(CASH=-20, MORALE=-80, BOARD=-1, FACE=-100),
+            Stats(CASH=30, MORALE=0, BOARD=49, FACE=0),
+        ),
+        (
+            StatsDelta(CASH=1000, MORALE=1000, BOARD=1000, FACE=1000),
+            Stats(CASH=100, MORALE=100, BOARD=100, FACE=100),
+        ),
     ],
 )
 def test_apply_delta_clamps_and_handles_signs(delta: StatsDelta, expected: Stats) -> None:

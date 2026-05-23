@@ -1,6 +1,6 @@
 """Health endpoints."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import APIRouter, Request
@@ -23,7 +23,7 @@ def _components(settings: Settings | None = None) -> dict[str, str]:
 
 
 def _timestamp() -> str:
-    return datetime.now(tz=timezone.utc).isoformat()
+    return datetime.now(tz=UTC).isoformat()
 
 
 @router.get("/healthz")
