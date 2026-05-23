@@ -37,7 +37,5 @@ export const selectLatestToast = (s: GameStoreState) => s.toasts[s.toasts.length
 export const selectInflight = (s: GameStoreState) => s.inflight;
 export const selectIsBusy = (s: GameStoreState) => Object.values(s.inflight).some(Boolean);
 export const selectIsLLMDegraded = (s: GameStoreState) => s.llmDegraded;
-export const selectIsDead = (s: GameStoreState) =>
-  s.snapshot ? s.snapshot.status === "dead" || s.snapshot.company.status === "dead" : false;
+export const selectIsDead = (s: GameStoreState) => s.snapshot?.status === "dead";
 export const selectIsWon = (s: GameStoreState) => s.snapshot?.status === "won";
-

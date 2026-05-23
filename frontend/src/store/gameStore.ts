@@ -122,18 +122,12 @@ export const useGameStore = create<GameStoreState>()(
             };
           }
 
-          const collected = state.snapshot.quarter.gossipCollected ?? [];
-          const gossipCollected = collected.includes(clean.lead.id)
-            ? collected
-            : [...collected, clean.lead.id];
-
           return {
             snapshot: {
               ...state.snapshot,
               quarter: {
                 ...state.snapshot.quarter,
                 apRemaining: clean.apRemaining,
-                gossipCollected,
               },
             },
             inflight: { ...state.inflight, collectGossip: false },
@@ -192,7 +186,7 @@ export const useGameStore = create<GameStoreState>()(
                   ...state.snapshot.quarter,
                   phase: "DONE" as const,
                   settlement: clean.settlement,
-                  pressBundle: clean.pressBundle ?? state.pressBundle ?? null,
+                  pressBundle: clean.pressBundle ?? state.pressBundle ?? undefined,
                 },
               }
             : state.snapshot;
