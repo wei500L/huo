@@ -24,6 +24,7 @@ export const selectLatestGossipLead = (s: GameStoreState) => s.latestGossipLead;
 export const selectGossipNotes = (s: GameStoreState) => s.gossipNotes;
 export const selectGossipTrust = (employeeId: string) => (s: GameStoreState) =>
   s.gossipTrust[employeeId] ?? 50;
+export const selectPressDraft = (s: GameStoreState) => s.pressDraft;
 export const selectDecisionCards = (s: GameStoreState) =>
   s.snapshot?.quarter.decisionCards ?? EMPTY_DECISION_CARDS;
 export const selectSelectedDecisionId = (s: GameStoreState) =>

@@ -5,7 +5,9 @@ import { useScreenStore, type ScreenId } from "@/store/screenStore";
 import { CompanySelectScreen } from "./CompanySelectScreen";
 import { GossipScene } from "./GossipScene";
 import DecisionScreen from "./DecisionScreen";
+import PressScreen from "./PressScreen";
 import { OnboardingScreen } from "./OnboardingScreen";
+import OverviewScreen from "./OverviewScreen";
 import { StatsDashboard } from "./StatsDashboard";
 
 const SCREEN_ORDER: ScreenId[] = [
@@ -71,8 +73,12 @@ export const StatsDashboardPlaceholder: FC<Record<string, unknown>> = function S
 export const DecisionPlaceholder: FC<Record<string, unknown>> = function DecisionPlaceholder() {
   return <DecisionScreen />;
 };
-export const PressPlaceholder = createPlaceholder(SCREEN_ORDER[6]);
+export const PressPlaceholder: FC<Record<string, unknown>> = function PressPlaceholder() {
+  return <PressScreen />;
+};
 export const SettlementPlaceholder = createPlaceholder(SCREEN_ORDER[7]);
-export const OverviewPlaceholder = createPlaceholder(SCREEN_ORDER[8]);
+export const OverviewPlaceholder: FC<Record<string, unknown>> = function OverviewPlaceholder() {
+  return <OverviewScreen />;
+};
 export const DeathReportPlaceholder = createPlaceholder(SCREEN_ORDER[9]);
 export const LegacyVaultPlaceholder = createPlaceholder(SCREEN_ORDER[10]);

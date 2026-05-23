@@ -34,6 +34,7 @@ import {
   type GameDataState,
 } from "./__internal__/gameStoreUtils";
 import { createGossipActions } from "./__internal__/gossipActions";
+import { useScreenStore } from "./screenStore";
 
 export interface GameStoreState extends GameDataState {
   ingestSnapshot: (s: GameSnapshotDTO) => void;
@@ -50,6 +51,7 @@ export interface GameStoreState extends GameDataState {
   addGossipNote: (lead: GossipLeadDTO) => void;
   adjustGossipTrust: (employeeId: string, delta: number) => void;
   spendGossipAP: (cost: number) => void;
+  setPressDraft: (draft: string) => void;
 }
 
 const persistOptions: PersistOptions<GameStoreState, ReturnType<typeof toPersistedState>> = {
@@ -147,7 +149,22 @@ export const useGameStore = create<GameStoreState>()(
         }
 
         const clean = deepStripForbiddenFields(a);
+        const rejected = !clean.accepted;
         set((state) => {
+          if (rejected) {
+            return {
+              inflight: { ...state.inflight, submitPress: false },
+              toasts: [
+                ...state.toasts,
+                {
+                  id: createToastId(),
+                  level: "error",
+                  message: "发布会发言被驳回",
+                },
+              ],
+            };
+          }
+
           if (!state.snapshot || state.snapshot.quarter.number !== clean.quarterNumber) {
             return {
               inflight: { ...state.inflight, submitPress: false },
@@ -172,6 +189,9 @@ export const useGameStore = create<GameStoreState>()(
             inflight: { ...state.inflight, submitPress: false },
           };
         });
+        if (rejected) {
+          useScreenStore.getState().replace("press");
+        }
       },
       ingestSettlementBundle: (b) => {
         if (!isSettlementBundleLike(b)) {
@@ -266,6 +286,11 @@ export const useGameStore = create<GameStoreState>()(
       setLLMDegraded: (v) => {
         set({
           llmDegraded: v,
+        });
+      },
+      setPressDraft: (draft) => {
+        set({
+          pressDraft: draft,
         });
       },
       resetForNewRun: () => {

@@ -32,6 +32,7 @@ export type GameDataState = {
   latestGossipLead: GossipLeadDTO | null;
   gossipNotes: GossipNote[];
   gossipTrust: Record<string, number>;
+  pressDraft: string;
   pendingDecision: DecisionCardDTO | null;
   pendingSettlementBundle: SettlementBundleDTO | null;
   pendingDeathBundle: DeathReportBundleDTO | null;
@@ -63,6 +64,7 @@ export const createEmptyDataState = (): GameDataState => ({
   gossipTrust: {
     employee_lin_xiaoman: 62,
   },
+  pressDraft: "",
   pendingDecision: null,
   pendingSettlementBundle: null,
   pendingDeathBundle: null,
