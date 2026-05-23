@@ -5,6 +5,7 @@ import type {
   DecisionAckDTO,
   DeathReportBundleDTO,
   GameSnapshotDTO,
+  GossipLeadDTO,
   GossipResultDTO,
   PressAckDTO,
   SettlementBundleDTO,
@@ -45,6 +46,9 @@ export interface GameStoreState extends GameDataState {
   setInflight: (key: keyof GameStoreState["inflight"], v: boolean) => void;
   setLLMDegraded: (v: boolean) => void;
   resetForNewRun: () => void;
+  addGossipNote: (lead: GossipLeadDTO) => void;
+  adjustGossipTrust: (employeeId: string, delta: number) => void;
+  spendGossipAP: (cost: number) => void;
 }
 
 const persistOptions: PersistOptions<GameStoreState, ReturnType<typeof toPersistedState>> = {
@@ -53,6 +57,16 @@ const persistOptions: PersistOptions<GameStoreState, ReturnType<typeof toPersist
   version: 1,
   partialize: (state) => toPersistedState(state),
   migrate: migratePersistedState,
+};
+
+const clampPercent = (value: number): number => Math.min(100, Math.max(0, Math.trunc(value)));
+
+const normalizeAPCost = (cost: number): number => {
+  if (!Number.isFinite(cost)) {
+    return 0;
+  }
+
+  return Math.max(0, Math.trunc(cost));
 };
 
 export const useGameStore = create<GameStoreState>()(
@@ -130,6 +144,7 @@ export const useGameStore = create<GameStoreState>()(
                 apRemaining: clean.apRemaining,
               },
             },
+            latestGossipLead: clean.lead,
             inflight: { ...state.inflight, collectGossip: false },
           };
         });
@@ -265,6 +280,51 @@ export const useGameStore = create<GameStoreState>()(
       resetForNewRun: () => {
         set({
           ...createEmptyDataState(),
+        });
+      },
+      addGossipNote: (lead) => {
+        set((state) => ({
+          gossipNotes: [
+            ...state.gossipNotes,
+            {
+              id: `${lead.id}-${state.gossipNotes.length + 1}`,
+              lead,
+              notedAt: new Date().toISOString(),
+            },
+          ],
+        }));
+      },
+      adjustGossipTrust: (employeeId, delta) => {
+        set((state) => {
+          const current = state.gossipTrust[employeeId] ?? 50;
+          return {
+            gossipTrust: {
+              ...state.gossipTrust,
+              [employeeId]: clampPercent(current + delta),
+            },
+          };
+        });
+      },
+      spendGossipAP: (cost) => {
+        const normalizedCost = normalizeAPCost(cost);
+        if (normalizedCost <= 0) {
+          return;
+        }
+
+        set((state) => {
+          if (!state.snapshot) {
+            return state;
+          }
+
+          return {
+            snapshot: {
+              ...state.snapshot,
+              quarter: {
+                ...state.snapshot.quarter,
+                apRemaining: Math.max(0, state.snapshot.quarter.apRemaining - normalizedCost),
+              },
+            },
+          };
         });
       },
     }),

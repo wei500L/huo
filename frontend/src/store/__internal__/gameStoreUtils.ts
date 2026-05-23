@@ -3,6 +3,7 @@ import type {
   DecisionCardDTO,
   DeathReportBundleDTO,
   GameSnapshotDTO,
+  GossipLeadDTO,
   GossipResultDTO,
   HistoryEntryDTO,
   PressAckDTO,
@@ -19,9 +20,18 @@ import {
   type GameStorePersistedState,
 } from "./persist";
 
+export interface GossipNote {
+  id: string;
+  lead: GossipLeadDTO;
+  notedAt: string;
+}
+
 export type GameDataState = {
   snapshot: GameSnapshotDTO | null;
   history: HistoryEntryDTO[];
+  latestGossipLead: GossipLeadDTO | null;
+  gossipNotes: GossipNote[];
+  gossipTrust: Record<string, number>;
   pendingDecision: DecisionCardDTO | null;
   pendingSettlementBundle: SettlementBundleDTO | null;
   pendingDeathBundle: DeathReportBundleDTO | null;
@@ -48,6 +58,11 @@ const createEmptyInflight = (): GameDataState["inflight"] => ({
 export const createEmptyDataState = (): GameDataState => ({
   snapshot: null,
   history: [],
+  latestGossipLead: null,
+  gossipNotes: [],
+  gossipTrust: {
+    employee_lin_xiaoman: 62,
+  },
   pendingDecision: null,
   pendingSettlementBundle: null,
   pendingDeathBundle: null,

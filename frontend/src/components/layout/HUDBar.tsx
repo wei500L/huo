@@ -151,6 +151,8 @@ export const HUDBar = () => {
 
   return (
     <header className="flex h-16 items-center gap-2 overflow-x-hidden overflow-y-visible border-b-2 border-stroke-ink bg-panel px-2">
+      <span className="sr-only">HUD</span>
+
       <LogoBadge />
 
       <DateCard

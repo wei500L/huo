@@ -31,6 +31,7 @@ const KIND_TO_VARIANT: Record<Exclude<CardKind, "default">, Variant> = {
 const TITLE_CLASS: Record<Variant, string> = {
   blue: "bg-pixel-blue text-white",
   green: "bg-pixel-green text-white",
+  purple: "bg-legacy-purple text-white",
   orange: "bg-pixel-orange text-white",
   red: "bg-pixel-red text-white",
   danger: "bg-alarm-red text-white",

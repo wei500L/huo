@@ -4,7 +4,7 @@ import { Loader } from "pixelarticons/react/Loader";
 
 import { Button as EightBitButton } from "@/components/ui/8bit";
 
-export type Variant = "blue" | "green" | "orange" | "red" | "ghost" | "danger";
+export type Variant = "blue" | "green" | "purple" | "orange" | "red" | "ghost" | "danger";
 export type Size = "sm" | "md" | "lg";
 
 export interface PixelButtonProps {
@@ -30,6 +30,7 @@ const SIZE_CLASS: Record<Size, string> = {
 const VARIANT_CLASS: Record<Variant, string> = {
   blue: "border-stroke-ink bg-pixel-blue text-white",
   green: "border-stroke-ink bg-pixel-green text-white",
+  purple: "border-stroke-ink bg-legacy-purple text-white",
   orange: "border-stroke-ink bg-pixel-orange text-white",
   red: "border-stroke-ink bg-pixel-red text-white",
   danger: "border-stroke-ink bg-alarm-red text-white",
@@ -39,6 +40,7 @@ const VARIANT_CLASS: Record<Variant, string> = {
 const VARIANT_HOVER_CLASS: Record<Variant, string> = {
   blue: "hover:bg-pixel-blue/90",
   green: "hover:bg-pixel-green/90",
+  purple: "hover:bg-legacy-purple/90",
   orange: "hover:bg-pixel-orange/90",
   red: "hover:bg-pixel-red/90",
   danger: "hover:bg-alarm-red/90",

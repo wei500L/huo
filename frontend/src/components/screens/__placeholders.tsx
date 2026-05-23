@@ -2,6 +2,9 @@ import type { FC } from "react";
 
 import { useScreenStore, type ScreenId } from "@/store/screenStore";
 
+import { CompanySelectScreen } from "./CompanySelectScreen";
+import { OnboardingScreen } from "./OnboardingScreen";
+
 const SCREEN_ORDER: ScreenId[] = [
   "onboarding",
   "company-select",
@@ -49,8 +52,12 @@ function createPlaceholder(id: ScreenId): FC<Record<string, unknown>> {
   };
 }
 
-export const OnboardingPlaceholder = createPlaceholder(SCREEN_ORDER[0]);
-export const CompanySelectPlaceholder = createPlaceholder(SCREEN_ORDER[1]);
+export const OnboardingPlaceholder: FC<Record<string, unknown>> = function OnboardingPlaceholder() {
+  return <OnboardingScreen />;
+};
+export const CompanySelectPlaceholder: FC<Record<string, unknown>> = function CompanySelectPlaceholder() {
+  return <CompanySelectScreen />;
+};
 export const OfficePlaceholder = createPlaceholder(SCREEN_ORDER[2]);
 export const GossipPlaceholder = createPlaceholder(SCREEN_ORDER[3]);
 export const StatsDashboardPlaceholder = createPlaceholder(SCREEN_ORDER[4]);

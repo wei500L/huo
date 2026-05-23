@@ -7,6 +7,9 @@ export const ICON_MAP = {
   users: () => import("pixelarticons/react/Users"), // 人员
   fire: () => import("pixelarticons/react/Fire"), // 危机
   trophy: () => import("pixelarticons/react/Trophy"), // 奖杯
+  target: () => import("pixelarticons/react/Target"), // 目标
+  star: () => import("pixelarticons/react/Star"), // 星标
+  coins: () => import("pixelarticons/react/Coins"), // 硬币
   alarm: () => import("pixelarticons/react/SquareAlert"), // 警报
   "trending-up": () => import("pixelarticons/react/Chart"), // 上升
   "trending-down": () => import("pixelarticons/react/ChartColumnDecreasing"), // 下降
@@ -44,6 +47,9 @@ export const ICON_EXPORT_NAMES: Record<IconName, string> = {
   users: "Users",
   fire: "Fire",
   trophy: "Trophy",
+  target: "Target",
+  star: "Star",
+  coins: "Coins",
   alarm: "SquareAlert",
   "trending-up": "Chart",
   "trending-down": "ChartColumnDecreasing",
@@ -79,6 +85,9 @@ export const EMOJI_FALLBACK: Record<IconName, string> = {
   users: "👥",
   fire: "🔥",
   trophy: "🏆",
+  target: "🎯",
+  star: "⭐",
+  coins: "🪙",
   alarm: "⚠️",
   "trending-up": "📈",
   "trending-down": "📉",
