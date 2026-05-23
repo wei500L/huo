@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import Literal, cast
+from typing import Any, Literal, cast
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -20,8 +20,6 @@ from app.domain import (
     Stats,
     StatsDelta,
 )
-from app.llm.schema import DirectorRaw
-from app.services.settlement_aggregator import SettlementContext
 
 from ._utils import (
     LEGACY_BUFF_TABLE,
@@ -71,7 +69,7 @@ class DirectorResolver:
     def __init__(self) -> None:
         self.legacy_buff_table = dict(LEGACY_BUFF_TABLE)
 
-    def resolve(self, ctx: SettlementContext, raw: DirectorRaw) -> DirectorResolveResult:
+    def resolve(self, ctx: Any, raw: Any) -> DirectorResolveResult:
         raw_metrics_delta = stats_delta_from_mapping(
             {key: clamp_int(value, -15, 10) for key, value in raw.metricsDelta.items()}
         )
@@ -206,7 +204,7 @@ class DirectorResolver:
         )
 
 
-def _judge_promise(promise: Promise, ctx: SettlementContext) -> bool | None:
+def _judge_promise(promise: Promise, ctx: Any) -> bool | None:
     parsed = promise.parsed
     if parsed is None or parsed.deadline_quarter is None:
         return None
@@ -232,7 +230,7 @@ def _judge_promise(promise: Promise, ctx: SettlementContext) -> bool | None:
     return None
 
 
-def _current_metric_value(metric: str, ctx: SettlementContext) -> int | None:
+def _current_metric_value(metric: str, ctx: Any) -> int | None:
     stats: Stats = ctx.stats_after_immediate
     return {
         "CASH": stats.CASH,

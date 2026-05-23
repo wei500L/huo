@@ -1,0 +1,20 @@
+@font-face {
+  font-family: 'Fusion Pixel';
+  src: url('/fonts/fusion-pixel-12px-monospaced-zh_hans.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+.pixel-render {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.pixel-stroke-2 {
+  border: 2px solid #1b1b1b;
+}
+
+.pixel-shadow {
+  box-shadow: 4px 4px 0 0 #1b1b1b;
+}

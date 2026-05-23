@@ -4,12 +4,11 @@ from __future__ import annotations
 
 import hashlib
 import math
-from typing import Literal
+from typing import Any, Literal, cast
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.domain import DeathReason, PressInput
-from app.services.settlement_aggregator import SettlementContext
 
 from .prompt_format import (
     _escape_user_input,
@@ -30,7 +29,6 @@ __all__ = (
     "PROMPT_TEMPLATE_PRESS_EVAL",
     "PromptBuilder",
     "PromptBundle",
-    "SettlementContext",
     "_escape_user_input",
 )
 
@@ -143,8 +141,7 @@ class PromptBuilder:
         self.press_eval_system_template = PROMPT_TEMPLATE_PRESS_EVAL
         self.death_report_system_template = PROMPT_TEMPLATE_DEATH_REPORT
 
-    def build_director_prompt(self, ctx: SettlementContext) -> PromptBundle:
-        press_input = _require_press_input(ctx)
+    def build_director_prompt(self, ctx: Any) -> PromptBundle:
         user = "\n".join(
             [
                 f"session_id: {ctx.session_id}",
@@ -154,7 +151,7 @@ class PromptBuilder:
                 "决策卡 title+description:",
                 _quote_block(_format_decision_card(ctx.selected_decision)),
                 "press_input.transcript 摘要（≤ 150 字）:",
-                _quote_block(_summarize_text(press_input.transcript, 150)),
+                _format_optional_press_input(ctx.press_input),
                 "最近 6 条 agent_memory:",
                 _format_memory_window(ctx.agent_memory_window),
                 "当季承诺待判定列表:",
@@ -165,7 +162,7 @@ class PromptBuilder:
         )
         return self._bundle("director", self.director_system_template, user, 800, 0.7, ctx)
 
-    def build_press_eval_prompt(self, ctx: SettlementContext) -> PromptBundle:
+    def build_press_eval_prompt(self, ctx: Any) -> PromptBundle:
         press_input = _require_press_input(ctx)
         user = "\n".join(
             [
@@ -189,7 +186,7 @@ class PromptBuilder:
 
     def build_death_report_prompt(
         self,
-        ctx: SettlementContext,
+        ctx: Any,
         death_reason: DeathReason,
     ) -> PromptBundle:
         user = "\n".join(
@@ -220,7 +217,7 @@ class PromptBuilder:
         user: str,
         max_tokens: int,
         temperature: float,
-        ctx: SettlementContext,
+        ctx: Any,
     ) -> PromptBundle:
         return PromptBundle(
             system=system,
@@ -233,13 +230,19 @@ class PromptBuilder:
         )
 
 
-def _require_press_input(ctx: SettlementContext) -> PressInput:
+def _require_press_input(ctx: Any) -> PressInput:
     if ctx.press_input is None:
         raise ValueError("press_input is required for this prompt")
-    return ctx.press_input
+    return cast(PressInput, ctx.press_input)
 
 
-def _context_signature(ctx: SettlementContext) -> str:
+def _format_optional_press_input(press_input: PressInput | None) -> str:
+    if press_input is None:
+        return "    无发布会输入。"
+    return _quote_block(_summarize_text(press_input.transcript, 150))
+
+
+def _context_signature(ctx: Any) -> str:
     transcript_len = len(ctx.press_input.transcript) if ctx.press_input is not None else 0
     payload = f"{ctx.session_id}|{ctx.quarter_number}|{ctx.selected_decision.id}|{transcript_len}"
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:40]

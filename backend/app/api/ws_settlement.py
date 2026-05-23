@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 
-from app.api.ws_connection import _ack_envelope, _map_exception, _send, _wrap_outbound
+from app.api.ws_connection import _map_exception, _send, _toast, _wrap_outbound
 from app.protocol import SettlementBundle, SettleQuarter
 from app.services import DeathReportService, SettlementOrchestrator
 
@@ -18,7 +18,7 @@ async def queue_settlement(
     orchestrator: SettlementOrchestrator,
     death_report_service: DeathReportService,
 ) -> None:
-    await _send(player_id, _ack_envelope(ack_for, "settlement_queued"))
+    await _send(player_id, _toast("settlement_queued", ack_for=ack_for))
     asyncio.create_task(
         _settle_background(
             player_id,
@@ -49,7 +49,7 @@ async def _settle_background(
             death=result.death_reason,
         )
         await _send(player_id, _wrap_outbound(bundle, ack_for))
-        if result.death_reason is not None or result.won:
+        if result.death_reason is not None:
             report = await death_report_service.generate(session_id, result.death_reason)
             await _send(player_id, _wrap_outbound(report, ack_for))
     except Exception as exc:  # noqa: BLE001

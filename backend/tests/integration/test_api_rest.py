@@ -80,7 +80,7 @@ def _build_session(player_id: str) -> GameSession:
     )
     employees = [
         Employee(
-            id=str(uuid4()),
+            id=f"E-{index:08x}",
             name=name,
             role=role,
             competence=80 - index,

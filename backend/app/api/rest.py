@@ -207,8 +207,7 @@ async def settle_quarter(
 
 @router.post("/games/{session_id}/state/transition", response_model=GameSnapshot)
 async def transition_state(
-    session_id: str,
-    payload: TransitionRequest,
+    session_id: str, payload: TransitionRequest,
     state_machine: QuarterStateMachine = Depends(get_quarter_state_machine),
     session_repo: GameSessionRepo = Depends(get_session_repo),
     meta_repo: MetaProgressRepo = Depends(get_meta_repo),

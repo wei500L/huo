@@ -33,7 +33,6 @@ from .prompt_builder import (
     PROMPT_TEMPLATE_PRESS_EVAL,
     PromptBuilder,
     PromptBundle,
-    SettlementContext,
     _escape_user_input,
 )
 from .schema import (
@@ -76,7 +75,6 @@ __all__ = (
     "STUB_PRESS_EVAL",
     "PromptBuilder",
     "PromptBundle",
-    "SettlementContext",
     "_escape_user_input",
     "clamp_metrics_delta",
     "extract_json_block",

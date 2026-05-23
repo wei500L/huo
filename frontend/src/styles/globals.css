@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    border-radius: 0 !important;
+  }
+
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+
+  body {
+    background: #f4f2eb;
+    color: #1b1b1b;
+    font-family: "Fusion Pixel", monospace;
+    image-rendering: pixelated;
+  }
+}

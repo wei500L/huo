@@ -99,5 +99,5 @@ class DecisionCard(BaseModel):
 
 def _validate_stats_delta_bounds(delta: StatsDelta) -> None:
     for field_name, value in delta.model_dump(exclude_none=True).items():
-        if value < -25 or value > 25:
-            raise ValueError(f"{field_name} must be between -25 and 25")
+        if value < -50 or value > 25:
+            raise ValueError(f"{field_name} must be between -50 and 25")

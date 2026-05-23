@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-from typing import Literal, cast
+from typing import Any, Literal, cast
 
 from pydantic import BaseModel, ConfigDict
 
 from app.domain import MediaHeadline, PressBundle, PressEvaluation, PressInput, StatsDelta
-from app.llm.schema import PressEvalRaw
-from app.services.settlement_aggregator import SettlementContext
 
 from ._utils import (
     MEDIA_OUTLET_POOL,
@@ -36,7 +34,7 @@ PressResolution = PressResolveResult
 class PressResolver:
     """Turn validated press raw output into authoritative press output."""
 
-    def resolve(self, ctx: SettlementContext, raw: PressEvalRaw) -> PressResolveResult:
+    def resolve(self, ctx: Any, raw: Any) -> PressResolveResult:
         press_input = _require_press_input(ctx)
         raw_metrics_delta = stats_delta_from_mapping(
             {key: clamp_int(value, -25, 15) for key, value in raw.metricsDelta.items()}
@@ -68,7 +66,7 @@ class PressResolver:
         )
 
 
-def _build_headlines(ctx: SettlementContext, raw: PressEvalRaw) -> list[MediaHeadline]:
+def _build_headlines(ctx: Any, raw: Any) -> list[MediaHeadline]:
     stats = ctx.stats_after_immediate
     outlets = _pick_outlets(stats)
     headlines: list[MediaHeadline] = []
@@ -122,7 +120,7 @@ def _pick_outlets(stats: object) -> list[str]:
     return deduped
 
 
-def _headline_for_outlet(outlet: str, raw: PressEvalRaw, stats: object) -> str:
+def _headline_for_outlet(outlet: str, raw: Any, stats: object) -> str:
     cash = getattr(stats, "CASH", 0)
     morale = getattr(stats, "MORALE", 0)
     face = getattr(stats, "FACE", 0)
@@ -148,7 +146,7 @@ def _tone_for_outlet(outlet: str) -> str:
     return "neutral"
 
 
-def _require_press_input(ctx: SettlementContext) -> PressInput:
+def _require_press_input(ctx: Any) -> PressInput:
     if ctx.press_input is None:
         raise ValueError("press_input is required for press resolution")
-    return ctx.press_input
+    return cast(PressInput, ctx.press_input)

@@ -1,0 +1,415 @@
+# 《YES, BOSS!》前端 — 工作流提示词库 v1.0
+
+> **使用对象**：前端成员（DOM / CSS / 浏览器 API / LLM 客户端）
+> **使用方式**：复制对应任务的「Prompt 模板」喂给 Claude Code / Cursor，把 `{{占位符}}` 替换成实际值
+> **配套文档**：`DESIGN(3).md` §十五、`docs/architecture.md`、现有代码 `js/state.js / content.js / director.js / press.js`
+> **更新日期**：2026-05-23
+
+---
+
+## 0. 你的角色与本库范围
+
+游戏的**用户接触面**全在你这。本期原型是 4 季度文字版（不是 DESIGN 里 8 季度+PixiJS 的最终版），所以你要交付的相对收敛：
+
+- **`js/llm.js`**：OpenAI 兼容协议客户端（DeepSeek / 智谱 / 通义 / Kimi / 豆包 / 自定义都能切）
+- **`js/ui.js`**：全部 DOM 渲染（HUD / 决策卡 / 八卦行 / 发布会 / 结算 / 死亡报告 / Onboarding）
+- **`js/main.js`**：生命周期串联（state ↔ ui ↔ director/press）
+- **`styles.css`**：深夜办公室终端美学（已有基础，按需补）
+- **`index.html`**：入口骨架（已有基础）
+- **localStorage 配置**：API key / endpoint / model 持久化，**绝不上传**
+
+**不属于你**：写 LLM prompt（找 AI Agent 工程师）、写决策卡数据（找策划）、画图（找美术）、跑测试集（找 QA）。但你**消费**他们的产出，所以接口出问题第一时间是你发现。
+
+**风格红线**：纯 DOM + ES Module，零 npm 依赖，双击 index.html 能跑（除非启用 LLM 模式需要 http server）。
+
+---
+
+## 1. 工作流速查表
+
+| 任务 | 用哪个 Prompt | 产出 | 验收 |
+|---|---|---|---|
+| 写 LLM 客户端 | §2 LLM 客户端 | js/llm.js | §2.4 自检 |
+| 写 Onboarding | §3 Onboarding | index.html + ui.js 片段 | 首次访问引导通过 |
+| 写 HUD | §4 HUD 组件 | ui.js 片段 + CSS | 4 指标实时更新 |
+| 写决策卡 | §5 决策卡 | ui.js 片段 + CSS | 3 卡并排 hover 翻起 |
+| 写发布会面板 | §6 发布会 UI | ui.js + press 接线 | textarea 输入跑通 |
+| 写结算 / 死亡报告 | §7 结算 | ui.js + 打字机动画 | 媒体头条传真机样式 |
+| 串联生命周期 | §8 main.js 编排 | js/main.js | 4 季度循环不卡 |
+| 错误兜底 UI | §9 错误态 | ui.js 片段 | LLM 失联也能玩完 |
+| 性能与体积 | §10 优化 | 合并 / lazy | FCP < 1s |
+
+---
+
+## 2. LLM 客户端（js/llm.js）
+
+> 这是你对外协议适配层。OpenAI 兼容协议覆盖国内主流 LLM——DeepSeek / 智谱 / 通义 / Kimi / 豆包 / 自定义 endpoint。
+
+### 2.1 让 Claude Code 写
+
+```text
+你是前端工程师。帮我在 js/llm.js 写一个零依赖的 LLM 客户端,配合现有 js/director.js / js/press.js 使用。
+
+环境:
+- 浏览器原生 fetch
+- ES Module
+- localStorage 存配置(key/endpoint/model)
+
+要求实现:
+
+1. getLLMConfig() / setLLMConfig({apiKey, endpoint, model, provider})
+   - 写入 localStorage,key 名 'yb_llm_config_v1'
+   - apiKey 不打印到 console
+   - 提供 6 个预设 provider: 'deepseek' / 'zhipu' / 'tongyi' / 'kimi' / 'doubao' / 'custom'
+     每个预设 endpoint + 默认 model,但都允许覆盖
+
+2. isLLMConfigured() → boolean
+   仅检查 apiKey + endpoint 都不空
+
+3. async chatComplete({system, user, maxTokens, temperature, timeoutMs}) → string
+   - POST {endpoint}/v1/chat/completions(若 endpoint 已带 /chat/completions 不重复拼)
+   - body: {model, messages:[{role:'system',content:system},{role:'user',content:user}], max_tokens, temperature, response_format:{type:'json_object'}}
+   - timeout 默认 15000ms,用 AbortController
+   - Authorization: Bearer {apiKey}
+   - 返回 message.content(纯字符串)
+   - 任何 4xx/5xx/超时 → throw 带 message 的 Error,让 director/press 自己降级 stub
+
+4. extractJson(text) → object | null
+   - 容错: text 可能被 ```json``` 包裹 / 头尾带解释 / 多余字符
+   - 用 first-{ 到 last-} 切片再 JSON.parse
+   - parse 失败返回 null,不抛
+
+5. testConnection({apiKey, endpoint, model}) → {ok, latencyMs, error}
+   - 发一条最小 ping("回复'pong'"),验证 200 且能拿到 content
+   - Onboarding 用,3s 超时
+
+约束:
+- 严禁把 apiKey 拼到 URL 或 GET 参数
+- 严禁 console.log apiKey 任何字符
+- 错误信息脱敏: "401 unauthorized" 而不是 "key sk-xxx invalid"
+- 全部异步函数有显式 timeout
+- 文件 ≤ 200 行,纯函数 + 1 个内部 _config 单例
+- 注释只在 WHY 不明显处加(如 "豆包用 ark.cn-beijing... 不是标准 v1")
+
+输出完整 js/llm.js。
+```
+
+### 2.2 6 个预设填空
+
+| provider | endpoint | 默认 model | 备注 |
+|---|---|---|---|
+| deepseek | `https://api.deepseek.com` | `deepseek-chat` | 性价比首选 |
+| zhipu | `https://open.bigmodel.cn/api/paas/v4` | `glm-4-flash` | 国产稳 |
+| tongyi | `https://dashscope.aliyuncs.com/compatible-mode` | `qwen-plus` | 阿里 |
+| kimi | `https://api.moonshot.cn` | `moonshot-v1-8k` | 月之暗面 |
+| doubao | `https://ark.cn-beijing.volces.com/api/v3` | 由用户填 endpoint id | 字节，model 是 ep-xxx |
+| custom | 用户填 | 用户填 | 自部署 |
+
+### 2.3 安全提醒
+
+- localStorage 不是加密存储，但**不上传**胜过任何"加密"。提示用户共用电脑请用无痕模式。
+- `response_format:{type:'json_object'}` 不是所有提供商都支持——若 400 报错回退到不带这字段重试一次。
+- 浏览器直连 API 在生产期换后端代理；本期原型可接受。
+
+### 2.4 自检清单
+
+- [ ] 切换 6 个 provider 都能跑通 testConnection
+- [ ] apiKey 在 Network 面板请求体可见但 console / DOM / 错误提示中不可见
+- [ ] timeout 15s 后 AbortController 真的取消（不是只 reject 但请求继续）
+- [ ] extractJson 对 5 种脏输入都能正确容错（见 AI Agent 提示词库 §5.2 的 bad case）
+- [ ] localStorage 删除 key 后 isLLMConfigured() 返回 false
+
+---
+
+## 3. Onboarding（首次访问）
+
+`index.html` 已有 `#onboarding` 骨架。要做的是表单逻辑 + 持久化 + 测连。
+
+```text
+帮我在 ui.js 写 renderOnboarding() + 配套事件:
+
+布局(已有基础 HTML 在 index.html #onboarding):
+- 标题 "$ YES, BOSS!"
+- 一段说明: 必须填 LLM
+- 表单字段:
+  · provider 下拉(6 选项)
+  · endpoint 文本框(选 provider 后自动填默认,可改)
+  · model 文本框(同上)
+  · apiKey 密码框(type=password,带 👁 切换可见)
+  · [测试连接] 按钮
+  · 测试结果区: ✅ 通过 (200ms) / ❌ 失败原因
+  · [开始游戏] 按钮(仅测试通过后可点)
+- 底部小字: "Key 仅存浏览器 localStorage,不上传。共用电脑请用无痕模式。"
+
+行为:
+- provider 切换 → 自动填 endpoint + model 占位(从 §2.2 表)
+- [测试连接] → 调 llm.testConnection,显示延迟或错误
+- [开始游戏] → setLLMConfig + 隐藏 onboarding + 调 startNewGame()
+- 已配置过(localStorage 有) → 启动时不显示 onboarding,但顶部齿轮图标可重开
+
+不要用 React。用原生 createElement + addEventListener。
+样式复用 styles.css 已有变量(--gold / --bg / --fg)。
+```
+
+---
+
+## 4. HUD（顶部 4 指标）
+
+```text
+帮我写 renderHUD(state) 和样式。
+
+布局(单行, 32px 高):
+[Q3/4]  [💰 现金 38] [💪 士气 45] [👔 董事 52] [😎 体面 68]  [⚙ 设置]
+
+每个指标:
+- emoji 16×16
+- label 中文 ≤ 4 字
+- 数字 0-100, 等宽字体
+- 横向 progress bar 60px wide × 4px tall, 颜色随值:
+  ≤ 20 → var(--red)
+  21-50 → var(--orange)
+  51-80 → var(--gold)
+  > 80 → var(--green)
+
+行为:
+- state 变化时 update,数字滚动动画 ≤ 400ms (rAF + easeOutQuad)
+- 任一指标 ≤ 20 → 该项整体 0.6Hz pulse(opacity 0.6 ↔ 1.0)
+- ⚙ 点开重新打开 LLM 配置面板(复用 onboarding,但允许取消)
+
+实现限制:
+- 不引入动画库
+- update 必须 idempotent(连续调用同 state 不闪)
+- 一次 render 不超过 4 次 DOM write(每指标合成 textContent + style.width 一次写入)
+```
+
+---
+
+## 5. 决策卡（3 张并排）
+
+```text
+帮我写 renderDecisionCards(state.thisQuarter.decisionCards, onSelect):
+
+布局: 3 卡水平排列, gap 16px,
+单卡 240×320:
+  · 顶: category badge + 标题(≤14 字)
+  · 中: 4 指标即时影响行(💰+15 💪-12 👔-3 😎-5),正数 var(--green) 负数 var(--red)
+  · 中下: description (≤40 字, 灰字)
+  · 底: italic flavor (≤30 字, 引号样式)
+  · footer: [选择] 按钮
+
+交互:
+- hover: transform translateY(-5px) + box-shadow + 0.15s transition
+- click: 选中卡 outline gold + 其他两张 filter:grayscale(60%)
+- 选定后等 300ms 再触发 onSelect(让玩家看到反馈)
+- 二次点击同一卡 = 确认; 点其他卡 = 改选
+
+数据来自 state.thisQuarter.decisionCards (DECISION_CARDS 池经 prepareQuarter 抽 3 张)。
+卡上数值字段名: card.immediateEffect.{CASH,MORALE,BOARD,FACE}
+
+约束:
+- 不修改 state, 只通过 onSelect 回调通知
+- 键盘可用: 1/2/3 数字键选第 1/2/3 张, Enter 确认
+```
+
+---
+
+## 6. 发布会面板（Q3 触发）
+
+```text
+帮我写 renderPressPanel(state, onSubmit, onSkip):
+
+state.thisQuarter.pressType ∈ PRESS_TYPES (见 content.js)。
+布局(模态遮罩, 占屏幕 80%):
+
+顶: 📺 + pressType.title + ⏱ 倒计时(可选,不强制)
+中部:
+  左(40%): "想象你正对着摄像头" 占位 ASCII art (本期不接摄像头)
+  右(60%):
+    · 必答问题 list (来自 PRESS_TYPES[key].mustAnswer 数组)
+    · 当前在场记者 (按当前指标动态选 tone)
+    · 提示: "30-300 字"
+底:
+  · textarea 6 行, placeholder "新官上任要说什么?", maxlength 300
+  · 实时字数统计 / 必答关键词命中提示(PRESS_KEYWORDS 命中高亮)
+  · 按钮: [发言完毕] (字数 ≥ 30 才可点) / [跳过 (扣 FACE -10)]
+
+提交流程:
+- onSubmit(transcript) → ui 锁面板 + 显示"AI 正在评估..."loading
+- 父层 await evaluatePress(state, transcript)
+- 拿结果 → 渲染 §7 媒体反应
+
+约束:
+- 字数 < 30: 按钮 disabled + 提示"再说点"
+- 出现真公司/真人名(QA 给的黑名单 docs/brand_blacklist.txt 命中) → 提示"涉及真实主体,已替换",透明替换为 [品牌] 后再 submit
+- 提供 [改用文字模式] 按钮(本期默认就是文字模式,但保留 placeholder for 后期接 ASR)
+- ESC 键 = 跳过 + 二次确认
+- LLM 评估时显示骨架屏,不卡死
+```
+
+---
+
+## 7. 结算 / 媒体反应 / 死亡报告
+
+```text
+帮我写 3 个组件:
+
+== renderSettlement(state.thisQuarter.settlement) ==
+- 4 项指标 delta 动画(从旧值滚到新值,各项错峰 80ms)
+- 季度小报(quarterReport 文本) 打字机效果 30ms/字
+- 媒体头条卡: 传真机吐纸样式(顶部虚线 tear, 侧面噪点纹理),
+  outlet + headline + tone 色标(positive 绿 / neutral 灰 / negative 橙 / mocking 红)
+- 员工八卦行: 头像占位 + speaker + line, 灰底圆角
+- 竞品动作 / 市场信号 各一行小字
+- 底部 [进入下一季] 或 [查看死亡报告](若死亡)
+
+== renderMediaPaper(headline) ==
+单条头条 div, 复用上面的传真机样式, 80ms slide-in + slight wobble。
+
+== renderDeathReport(state) ==
+全屏黑底, 报纸版式:
+- masthead "《YES, BOSS! 公司讣告》" + 日期
+- 死因 title (state.deathCause.title, 大字)
+- 300 字讣告(LLM 生成,本期可用 stub 模板拼)
+- 关键决策时间线(state.history filter type=decision)
+- 最大责任决策 + 一句话 quote
+- 媒体头条 3 条
+- [带着遗产进入下一轮] 按钮(本期点击 = createNewGame)
+
+效果:
+- 打字机 30ms/字
+- 黑屏 → 报纸淡入 800ms
+- 用户按任意键加速打字(全部 instant 显示)
+
+无外部依赖。所有动画 CSS transition + setInterval/setTimeout。
+```
+
+---
+
+## 8. main.js — 生命周期编排
+
+```text
+帮我在 js/main.js 写完整入口:
+
+import { createNewGame, prepareQuarter, selectDecision, applyMetricsDelta,
+         applyDirectorOutput, applyPressResult, checkDeath, advanceQuarter,
+         METRIC_KEYS, METRIC_LABELS, TOTAL_QUARTERS } from './state.js';
+import { runDirector } from './director.js';
+import { evaluatePress } from './press.js';
+import { isLLMConfigured } from './llm.js';
+import * as ui from './ui.js';
+
+启动流程:
+1. DOMContentLoaded → if !isLLMConfigured() → ui.renderOnboarding(onConfigured: startNewGame)
+2. else → startNewGame()
+
+startNewGame():
+  state = createNewGame()
+  prepareQuarter(state)
+  ui.renderHUD(state)
+  ui.renderBriefing(state.thisQuarter.briefing)
+  ui.renderGossip(state.thisQuarter.gossip)
+  ui.renderDecisionCards(state.thisQuarter.decisionCards, onCardPick)
+
+onCardPick(cardId):
+  selectDecision(state, cardId)
+  applyMetricsDelta(state, card.immediateEffect)
+  ui.updateHUD(state)
+  ui.lockCards()
+  if state.thisQuarter.pressType:
+    transcript = await ui.openPressPanel(state)
+    pressResult = await evaluatePress(state, transcript)
+    applyPressResult(state, pressResult, transcript)
+    ui.renderPressResult(pressResult)
+  directorOut = await runDirector(state, card)
+  applyDirectorOutput(state, directorOut)
+  ui.renderSettlement(state.thisQuarter.settlement)
+  ui.updateHUD(state)
+  await ui.waitNextClick()
+  death = checkDeath(state)
+  if death:
+    ui.renderDeathReport(state)
+  else:
+    advanceQuarter(state)
+    if state.status === 'won':
+      ui.renderVictory(state)
+    else:
+      prepareQuarter(state)
+      ui.renderQuarter(state)
+
+错误处理:
+- 任何 await 抛错 → ui.renderToast(err.message) + 不推进 state
+- LLM 失联用 stub 已经在 director/press 里兜底了,UI 显示 [AI 失联] 标识
+- 用户切 tab 不暂停(纯回合制无所谓)
+
+约束:
+- 全部异步用 async/await,不要 .then 嵌套
+- 不引入状态管理库,直接闭包持有 state 引用
+- 所有 ui.* 调用是 idempotent
+```
+
+---
+
+## 9. 错误兜底 UI
+
+| 错误 | UI 反馈 |
+|---|---|
+| LLM 401 / key 错 | 顶部红条 "AI 配置失效，[重设]" → 打开 onboarding |
+| LLM 超时 | toast "AI 失联，已用兜底文案" + settlement 角落 [AI 失联] 灰标 |
+| LLM 返回非 JSON | 同上（director/press 已 fallback，UI 只标记） |
+| localStorage 满 | toast "存档已满，[导出 JSON]" |
+| 黑名单命中（真公司名） | 输入框上方提示 "已替换 N 处敏感内容" |
+| 浏览器不支持 | onboarding 拒绝进入 + 提示用 Chrome/Edge 最新版 |
+
+```text
+帮我在 ui.js 写 renderToast(msg, type='info', durationMs=3000):
+- 右上角 fixed
+- 类型: info / warn / error → 不同色
+- 多条堆叠, 上下排列
+- 自动消失 + 手动 ✕ 关闭
+- 不阻塞游戏
+```
+
+---
+
+## 10. 性能与体积
+
+- **首屏 FCP < 1s**：index.html 直 inline critical CSS（HUD 颜色变量），其余 link defer
+- **零依赖**：本期不上 React/Vue/PixiJS。任何"装个库"的诱惑先看能不能 30 行原生写完
+- **JS 总体积 < 80KB**（gzipped）：state + content + director + press + llm + ui + main 加起来
+- **LLM 调用**：单季 ≤ 1 次 director + 1 次 press（仅 Q3）= 单局 5 次调用，按 §AI Agent §8.1 预算守住
+
+---
+
+## 11. 验收清单
+
+- [ ] 双击 `index.html` → 没填 LLM 时正确显示 onboarding，跑通测连
+- [ ] 配置任一 provider → 能跑完 4 季度
+- [ ] Q3 发布会输入 30+ 字 → 能拿到媒体反应
+- [ ] 任一指标归零 → 死亡报告正确（标题 / 死因 / 时间线）
+- [ ] localStorage 删 key → 下次打开回到 onboarding
+- [ ] 断网 / LLM 错误 → 不卡死，能用 stub 跑完
+- [ ] apiKey 不出现在 console / DOM / 错误提示
+- [ ] HUD 任一指标 ≤ 20 显示 pulse 红
+- [ ] 键盘 1/2/3 + Enter 能选卡
+- [ ] 媒体头条传真机视觉 OK，tone 色标对
+- [ ] 桌面 1280×720 + 笔记本 1366×768 + 13" mac 都能完整显示
+
+---
+
+## 12. 与其他成员的接口
+
+| 你消费 | 来自谁 | 形态 |
+|---|---|---|
+| Director / Press 输出 schema | AI Agent 工程师 | 已在 `js/director.js` `js/press.js` 实现，对应 docs/types |
+| 决策卡 / 公司 / 八卦池 | 策划 | `js/content.js` 直接 import |
+| 4 指标区间 / 死亡阈值 | 策划 | `state.js` 已硬编码 0–100，DESIGN §12.5 |
+| 黑名单（真公司 / 真人名） | QA | `docs/brand_blacklist.txt`，写过滤函数读 |
+| 像素图 / icon | 美术 | 本期文字版仅 emoji，预留 `<img>` 槽位给 v1.1 |
+| LLM smell words | QA | 调试期 toast 提示，不阻塞 |
+
+| 你给 | 给谁 | 形态 |
+|---|---|---|
+| ui 渲染 hook 点 | 策划 | 让策划写新事件知道要 `ui.renderEvent()` |
+| LLM 客户端 API | AI Agent 工程师 | 让对方写 prompt 时知道 timeout / response_format 行为 |
+| 错误日志格式 | QA | 每个 toast 同时 console.error 结构化日志，QA 抓 |
+
+> **设计师注**：用户最先骂的永远是前端——"这破游戏卡死了""按钮不响应""我 key 填错怎么没提示"。你不是在做漂亮 UI，是在做"无论后端 / LLM / 网络出什么事，玩家仍能玩完一局"的最后一道闸。

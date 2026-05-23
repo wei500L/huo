@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import re
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -82,7 +83,7 @@ class ConnectionManager:
         if record is None:
             return
         try:
-            await record.websocket.send_text(envelope.model_dump_json(by_alias=True))
+            await record.websocket.send_text(_envelope_json(envelope))
         except Exception:
             return
 
@@ -95,7 +96,7 @@ class ConnectionManager:
             ]
         for websocket in targets:
             try:
-                await websocket.send_text(envelope.model_dump_json(by_alias=True))
+                await websocket.send_text(_envelope_json(envelope))
             except Exception:
                 continue
 
@@ -156,6 +157,13 @@ def _wrap_outbound(
     )
 
 
+def _envelope_json(envelope: Envelope[BaseModel]) -> str:
+    data = envelope.model_dump(mode="json", by_alias=True)
+    if isinstance(envelope.payload, BaseModel):
+        data["payload"] = envelope.payload.model_dump(mode="json", by_alias=True)
+    return json.dumps(data, ensure_ascii=False)
+
+
 def _snake_case(name: str) -> str:
     return _SNAKE_CASE_PATTERN.sub("_", name).lower()
 
@@ -179,7 +187,7 @@ def _ack_envelope(ack_for: str | None = None, reason: str | None = None) -> Enve
 
 
 def _ping_envelope() -> Envelope[BaseModel]:
-    return _wrap_outbound(AckPayload(ok=True), type_name="ping")
+    return _wrap_outbound(Toast(level="info", message="ping"), type_name="toast")
 
 
 def _toast(message: str, ack_for: str | None = None) -> Envelope[BaseModel]:

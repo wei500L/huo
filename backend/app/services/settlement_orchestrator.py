@@ -134,7 +134,8 @@ class SettlementOrchestrator:
         if session is None:
             raise SessionNotFound(f"session not found: {session_id}")
 
-        new_stats = session.stats.apply_delta(final_settlement.metrics_delta)
+        stats_before_settlement = session.stats
+        preview_stats = stats_before_settlement.apply_delta(final_settlement.metrics_delta)
         scheduled_events = [
             event.model_copy(deep=True, update={"resolved": True})
             if event.fire_quarter == ctx.quarter_number and not event.resolved
@@ -150,15 +151,6 @@ class SettlementOrchestrator:
         for entry in director_resolution.new_memory_entries:
             agent_memory = agent_memory.append(entry)
 
-        history_added = HistoryEntry(
-            quarter=ctx.quarter_number,
-            decision_id=ctx.selected_decision.id,
-            press_bundle_id=None,
-            stats_before=session.stats,
-            stats_after=new_stats,
-            settlement_summary=final_settlement.quarter_report[:60],
-        )
-
         quarter = session.quarter.model_copy(
             update={
                 "settlement": final_settlement,
@@ -167,12 +159,10 @@ class SettlementOrchestrator:
         )
         session = session.model_copy(
             update={
-                "stats": new_stats,
                 "quarter": quarter,
                 "scheduled_events": scheduled_events,
                 "promise_log": promise_log,
                 "agent_memory": agent_memory,
-                "history": [*session.history, history_added],
             },
         )
         await self.session_repo.save(session)
@@ -180,6 +170,15 @@ class SettlementOrchestrator:
         session, finish_result = await self.state_machine.finish_settlement(
             session_id,
             final_settlement,
+        )
+        new_stats = session.stats
+        history_added = session.history[-1] if session.history else HistoryEntry(
+            quarter=ctx.quarter_number,
+            decision_id=ctx.selected_decision.id,
+            press_bundle_id=None,
+            stats_before=stats_before_settlement,
+            stats_after=preview_stats,
+            settlement_summary=final_settlement.quarter_report[:60],
         )
 
         if press_bundle is not None:
