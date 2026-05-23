@@ -36,6 +36,7 @@ export interface CompanyDTO {
   id: string;
   name: string;
   business: string;
+  employeeCount?: number;
   absurdity: number;
   foundingMotto: string;
   deathCauses: DeathCauseDTO[];

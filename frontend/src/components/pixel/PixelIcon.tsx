@@ -69,7 +69,8 @@ const loadIcon = (name: IconName): Promise<{ default: ComponentType<SVGProps<SVG
 
   return loader()
     .then((module) => {
-      const candidate = (module as IconModule)[exportName] ?? (module as IconModule).default;
+      const iconModule = module as unknown as IconModule;
+      const candidate = iconModule[exportName] ?? iconModule.default;
 
       if (!candidate) {
         warnDev(`Icon "${name}" is missing export "${exportName}". Using emoji fallback.`);

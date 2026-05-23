@@ -213,7 +213,7 @@ function PixelSpeechBubbleImpl({
             >
               <PixelIcon ariaLabel="trust" name="morale" size={16} />
               <span>{`信任度 ${trustMeta.value}`}</span>
-              <span>{trust.label || trustMeta.label}</span>
+              <span>{trustMeta.label}</span>
             </div>
           ) : null}
         </div>

@@ -43,6 +43,7 @@ export const createMockSnapshot = (overrides: Partial<GameSnapshotDTO> = {}): Ga
     id: "company-entropy-noodles",
     name: "Entropy Noodles Inc.",
     business: "AI-powered instant noodles for enterprise offsites",
+    employeeCount: 5,
     absurdity: 87,
     foundingMotto: "Boil fast, pivot faster.",
     deathCauses: [
