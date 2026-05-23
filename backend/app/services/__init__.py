@@ -44,11 +44,19 @@ from .settlement_aggregator import (
 )
 
 if TYPE_CHECKING:
+    from .death_report_service import (
+        DeathReportService,
+        DeathReportServiceError,
+        InvalidTerminalSession,
+    )
+    from .legacy_resolver import LegacyEvaluation, LegacyResolver
     from .settlement_orchestrator import SettlementOrchestrator, SettlementResult
 
 __all__ = (
     "CardNotInDraw",
     "CompanyService",
+    "DeathReportService",
+    "DeathReportServiceError",
     "DecisionNotFound",
     "DecisionResult",
     "DecisionService",
@@ -62,6 +70,9 @@ __all__ = (
     "InvalidPhaseForGossip",
     "InvalidScene",
     "InvalidPressPhase",
+    "InvalidTerminalSession",
+    "LegacyEvaluation",
+    "LegacyResolver",
     "PressInputService",
     "PressInputServiceError",
     "NoDecisionSelected",
@@ -82,8 +93,25 @@ __all__ = (
 
 
 def __getattr__(name: str) -> object:
-    if name in {"SettlementOrchestrator", "SettlementResult"}:
-        module = import_module(".settlement_orchestrator", __name__)
+    if name in {
+        "DeathReportService",
+        "DeathReportServiceError",
+        "InvalidTerminalSession",
+        "LegacyEvaluation",
+        "LegacyResolver",
+        "SettlementOrchestrator",
+        "SettlementResult",
+    }:
+        module_name = {
+            "DeathReportService": ".death_report_service",
+            "DeathReportServiceError": ".death_report_service",
+            "InvalidTerminalSession": ".death_report_service",
+            "LegacyEvaluation": ".legacy_resolver",
+            "LegacyResolver": ".legacy_resolver",
+            "SettlementOrchestrator": ".settlement_orchestrator",
+            "SettlementResult": ".settlement_orchestrator",
+        }[name]
+        module = import_module(module_name, __name__)
         value = getattr(module, name)
         globals()[name] = value
         return value
