@@ -33,6 +33,7 @@ import {
   warnInvalid,
   type GameDataState,
 } from "./__internal__/gameStoreUtils";
+import { createGossipActions } from "./__internal__/gossipActions";
 
 export interface GameStoreState extends GameDataState {
   ingestSnapshot: (s: GameSnapshotDTO) => void;
@@ -57,16 +58,6 @@ const persistOptions: PersistOptions<GameStoreState, ReturnType<typeof toPersist
   version: 1,
   partialize: (state) => toPersistedState(state),
   migrate: migratePersistedState,
-};
-
-const clampPercent = (value: number): number => Math.min(100, Math.max(0, Math.trunc(value)));
-
-const normalizeAPCost = (cost: number): number => {
-  if (!Number.isFinite(cost)) {
-    return 0;
-  }
-
-  return Math.max(0, Math.trunc(cost));
 };
 
 export const useGameStore = create<GameStoreState>()(
@@ -282,51 +273,7 @@ export const useGameStore = create<GameStoreState>()(
           ...createEmptyDataState(),
         });
       },
-      addGossipNote: (lead) => {
-        set((state) => ({
-          gossipNotes: [
-            ...state.gossipNotes,
-            {
-              id: `${lead.id}-${state.gossipNotes.length + 1}`,
-              lead,
-              notedAt: new Date().toISOString(),
-            },
-          ],
-        }));
-      },
-      adjustGossipTrust: (employeeId, delta) => {
-        set((state) => {
-          const current = state.gossipTrust[employeeId] ?? 50;
-          return {
-            gossipTrust: {
-              ...state.gossipTrust,
-              [employeeId]: clampPercent(current + delta),
-            },
-          };
-        });
-      },
-      spendGossipAP: (cost) => {
-        const normalizedCost = normalizeAPCost(cost);
-        if (normalizedCost <= 0) {
-          return;
-        }
-
-        set((state) => {
-          if (!state.snapshot) {
-            return state;
-          }
-
-          return {
-            snapshot: {
-              ...state.snapshot,
-              quarter: {
-                ...state.snapshot.quarter,
-                apRemaining: Math.max(0, state.snapshot.quarter.apRemaining - normalizedCost),
-              },
-            },
-          };
-        });
-      },
+      ...createGossipActions(set),
     }),
     persistOptions,
   ),

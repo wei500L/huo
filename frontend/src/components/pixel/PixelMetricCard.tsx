@@ -19,24 +19,9 @@ export interface PixelMetricCardProps {
   sparkline?: number[];
   variant: "blue" | "green" | "orange" | "red" | "purple" | "gold";
   size?: "compact" | "default" | "hero";
+  dimmed?: boolean;
   onClick?: () => void;
 }
-
-const isMetricV2Enabled = (): boolean => {
-  const viteValue = import.meta.env.NEXT_PUBLIC_METRIC_V2;
-  if (viteValue) {
-    return viteValue === "on";
-  }
-
-  if (typeof process !== "undefined") {
-    return process.env.NEXT_PUBLIC_METRIC_V2 === "on";
-  }
-
-  return false;
-};
-
-const shouldRenderMetric = (metricKey: PixelMetricCardProps["metricKey"]): boolean =>
-  metricKey !== "SALES" && metricKey !== "MKT" ? true : isMetricV2Enabled();
 
 const TITLE_CLASS: Record<PixelMetricCardProps["variant"], string> = {
   blue: "bg-pixel-blue text-white",
@@ -103,14 +88,10 @@ const formatNumber = (value: number): string =>
   new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(Math.round(value));
 
 function PixelMetricCardImpl(
-  { metricKey, label, iconName, value, statusText, delta, sparkline, variant, size = "default", onClick }: PixelMetricCardProps,
+  { label, iconName, value, statusText, delta, sparkline, variant, size = "default", dimmed = false, onClick }: PixelMetricCardProps,
   ref: ForwardedRef<HTMLDivElement>,
 ) {
   const rolledValue = useNumberRoll(value);
-
-  if (!shouldRenderMetric(metricKey)) {
-    return null;
-  }
 
   const interactive = Boolean(onClick);
   const deltaPositive = (delta?.value ?? 0) >= 0;
@@ -140,8 +121,10 @@ function PixelMetricCardImpl(
       className={clsx(
         "relative flex flex-col overflow-hidden border-2 border-stroke-ink bg-panel text-ink-1 shadow-hard pixel-render",
         interactive && "cursor-pointer",
+        dimmed && "grayscale opacity-60",
         SIZE_CLASS[size],
       )}
+      aria-disabled={dimmed || undefined}
     >
       <div className={clsx("flex h-8 items-center justify-center border-b-2 border-stroke-ink px-2 text-px-sm leading-none", TITLE_CLASS[variant])}>
         <span className="min-w-0 truncate text-center">{label}</span>

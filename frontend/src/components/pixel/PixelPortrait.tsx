@@ -80,16 +80,31 @@ function PixelPortraitImpl({
     setUseNeutralFallback(true);
   };
 
+  const fallbackTone = id === "employee_lin_xiaoman" ? "#7D5AA8" : id === "ceo_female_01" ? "#5B7BE6" : "#6B7280";
+
   return (
     <div className={wrapperClassName} style={{ width: dimensions.width, height: dimensions.height }}>
-      <img
-        alt={`${meta.id} ${useNeutralFallback ? "neutral" : resolvedExpression}`}
-        className="block h-full w-full select-none pixel-render"
-        height={dimensions.height}
-        onError={handleError}
-        src={src}
-        width={dimensions.width}
-      />
+      {useNeutralFallback ? (
+        <div aria-label={`${meta.id} ${resolvedExpression}`} className="relative h-full w-full overflow-hidden border-2 border-stroke-ink bg-[#F2E7D8] pixel-render">
+          <span className="absolute left-[18%] top-[8%] h-[18%] w-[64%] border-2 border-stroke-ink bg-[#F6C8A4]" />
+          <span className="absolute left-[12%] top-[2%] h-[22%] w-[76%] border-2 border-stroke-ink" style={{ backgroundColor: fallbackTone }} />
+          <span className="absolute left-[28%] top-[18%] h-[8%] w-[10%] bg-ink-1" />
+          <span className="absolute right-[28%] top-[18%] h-[8%] w-[10%] bg-ink-1" />
+          <span className="absolute left-[24%] top-[32%] h-[8%] w-[52%] border-2 border-stroke-ink bg-[#D98C63]" />
+          <span className="absolute left-[20%] top-[42%] h-[26%] w-[60%] border-2 border-stroke-ink bg-[#E9B994]" />
+          <span className="absolute left-[16%] top-[56%] h-[26%] w-[68%] border-2 border-stroke-ink" style={{ backgroundColor: fallbackTone }} />
+          <span className="absolute left-[10%] bottom-[8%] h-[12%] w-[80%] border-2 border-stroke-ink bg-[#D9D2C2]" />
+        </div>
+      ) : (
+        <img
+          alt={`${meta.id} ${useNeutralFallback ? "neutral" : resolvedExpression}`}
+          className="block h-full w-full select-none pixel-render"
+          height={dimensions.height}
+          onError={handleError}
+          src={src}
+          width={dimensions.width}
+        />
+      )}
     </div>
   );
 }

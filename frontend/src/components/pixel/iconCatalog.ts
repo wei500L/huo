@@ -11,6 +11,7 @@ export const ICON_MAP = {
   star: () => import("pixelarticons/react/Star"), // 星标
   coins: () => import("pixelarticons/react/Coins"), // 硬币
   alarm: () => import("pixelarticons/react/SquareAlert"), // 警报
+  "line-chart": () => import("pixelarticons/react/Chart"), // 折线图
   "trending-up": () => import("pixelarticons/react/Chart"), // 上升
   "trending-down": () => import("pixelarticons/react/ChartColumnDecreasing"), // 下降
   check: () => import("pixelarticons/react/Check"), // 确认
@@ -51,6 +52,7 @@ export const ICON_EXPORT_NAMES: Record<IconName, string> = {
   star: "Star",
   coins: "Coins",
   alarm: "SquareAlert",
+  "line-chart": "Chart",
   "trending-up": "Chart",
   "trending-down": "ChartColumnDecreasing",
   check: "Check",
@@ -89,6 +91,7 @@ export const EMOJI_FALLBACK: Record<IconName, string> = {
   star: "⭐",
   coins: "🪙",
   alarm: "⚠️",
+  "line-chart": "📈",
   "trending-up": "📈",
   "trending-down": "📉",
   check: "✅",

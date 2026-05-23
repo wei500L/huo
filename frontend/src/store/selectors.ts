@@ -102,7 +102,7 @@ const MAIN_ACTION_BAR_HINTS: Record<
   },
   DECISION: {
     speaker: "board_chairman",
-    text: "TODO: 选能保命的方案，别先追漂亮故事。",
+    text: "记住：短期能活下去，才有未来的赢家。",
   },
   PRESS: {
     speaker: "ceo_male_02",

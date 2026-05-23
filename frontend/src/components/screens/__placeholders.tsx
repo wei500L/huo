@@ -3,7 +3,10 @@ import type { FC } from "react";
 import { useScreenStore, type ScreenId } from "@/store/screenStore";
 
 import { CompanySelectScreen } from "./CompanySelectScreen";
+import { GossipScene } from "./GossipScene";
+import DecisionScreen from "./DecisionScreen";
 import { OnboardingScreen } from "./OnboardingScreen";
+import { StatsDashboard } from "./StatsDashboard";
 
 const SCREEN_ORDER: ScreenId[] = [
   "onboarding",
@@ -59,9 +62,15 @@ export const CompanySelectPlaceholder: FC<Record<string, unknown>> = function Co
   return <CompanySelectScreen />;
 };
 export const OfficePlaceholder = createPlaceholder(SCREEN_ORDER[2]);
-export const GossipPlaceholder = createPlaceholder(SCREEN_ORDER[3]);
-export const StatsDashboardPlaceholder = createPlaceholder(SCREEN_ORDER[4]);
-export const DecisionPlaceholder = createPlaceholder(SCREEN_ORDER[5]);
+export const GossipPlaceholder: FC<Record<string, unknown>> = function GossipPlaceholder(params) {
+  return <GossipScene {...params} />;
+};
+export const StatsDashboardPlaceholder: FC<Record<string, unknown>> = function StatsDashboardPlaceholder() {
+  return <StatsDashboard />;
+};
+export const DecisionPlaceholder: FC<Record<string, unknown>> = function DecisionPlaceholder() {
+  return <DecisionScreen />;
+};
 export const PressPlaceholder = createPlaceholder(SCREEN_ORDER[6]);
 export const SettlementPlaceholder = createPlaceholder(SCREEN_ORDER[7]);
 export const OverviewPlaceholder = createPlaceholder(SCREEN_ORDER[8]);
