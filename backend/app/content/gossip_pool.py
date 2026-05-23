@@ -253,6 +253,7 @@ def get_gossip_templates_by_scene(scene: str) -> list[dict[str, Any]]:
 def sample_gossip_lead(
     scene: str,
     employees: list[Employee],
+    rng: Random | None = None,
     rng_seed: int | None = None,
 ) -> dict[str, Any]:
     if not employees:
@@ -260,7 +261,8 @@ def sample_gossip_lead(
     templates = GOSSIP_TEMPLATES.get(scene, [])
     if not templates:
         raise ValueError(f"unknown gossip scene: {scene}")
-    rng = Random(rng_seed)
+    if rng is None:
+        rng = Random(rng_seed)
     template = deepcopy(rng.choice(templates))
     reliability = _sample_reliability(template["reliability_distribution"], rng)
     is_truth = rng.random() < template["truth_probability"]

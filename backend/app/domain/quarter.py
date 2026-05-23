@@ -8,6 +8,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 from .decision import DecisionCard
+from .employee import GossipLead
 from .press import PressBundle, PressInput
 from .stats import Stats, StatsDelta
 
@@ -105,6 +106,7 @@ class Quarter(BaseModel):
     decision_cards: list[DecisionCard] = Field(default_factory=list)
     selected_decision_id: str | None = None
     gossip_collected: list[str] = Field(default_factory=list)
+    collected_leads: list[GossipLead] = Field(default_factory=list)
     press_input: PressInput | None = None
     press_bundle: PressBundle | None = None
     settlement: Settlement | None = None

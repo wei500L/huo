@@ -1,1 +1,37 @@
-placeholder
+# Sample brand blacklist maintained for QA review.
+Google
+OpenAI
+Microsoft
+Apple
+Amazon
+Meta
+Tesla
+NVIDIA
+Intel
+Adobe
+Oracle
+Salesforce
+Cisco
+IBM
+ByteDance
+Alibaba
+Tencent
+Baidu
+JD.com
+Meituan
+NetEase
+Bilibili
+Kuaishou
+Didi
+Xiaomi
+Sam Altman
+Sundar Pichai
+Satya Nadella
+Tim Cook
+Elon Musk
+Mark Zuckerberg
+Jensen Huang
+Jeff Bezos
+Larry Ellison
+Shantanu Narayen
+Arvind Krishna

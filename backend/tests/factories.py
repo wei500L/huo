@@ -206,6 +206,7 @@ def build_quarter(**overrides: object) -> Quarter:
         "decision_cards": [],
         "selected_decision_id": None,
         "gossip_collected": [],
+        "collected_leads": [],
         "press_input": None,
         "press_bundle": None,
         "settlement": None,
