@@ -7,7 +7,14 @@ import random
 
 from pydantic import BaseModel, ConfigDict
 
-from app.domain import Briefing, DeathReason, HistoryEntry, Quarter, QuarterPhase, Settlement
+from app.domain import (
+    Briefing,
+    DeathReason,
+    HistoryEntry,
+    Quarter,
+    QuarterPhase,
+    Settlement,
+)
 from app.repo.protocols import GameSession, GameSessionRepo
 
 from .company_service import _make_briefing
@@ -96,17 +103,15 @@ class QuarterStateMachine:
             quarter = session.quarter.model_copy(
                 update={"settlement": settlement, "phase": QuarterPhase.DONE},
             )
-            history = [
-                *session.history,
-                HistoryEntry(
-                    quarter=quarter.number,
-                    decision_id=quarter.selected_decision_id or "",
-                    press_bundle_id=None,
-                    stats_before=stats_before,
-                    stats_after=stats_after,
-                    settlement_summary=settlement.quarter_report[:60],
-                ),
-            ]
+            history_entry = HistoryEntry(
+                quarter=quarter.number,
+                decision_id=quarter.selected_decision_id or "",
+                press_bundle_id=None,
+                stats_before=stats_before,
+                stats_after=stats_after,
+                settlement_summary=settlement.quarter_report[:60],
+            )
+            history = _append_history_if_new(session.history, history_entry)
 
             death_reason = stats_after.is_dead()
             if death_reason is not None:
@@ -177,6 +182,8 @@ class QuarterStateMachine:
             number=next_number,
             phase=QuarterPhase.BRIEFING,
             briefing=_make_next_briefing(session, next_number),
+            settlement=quarter.settlement,
+            press_bundle=quarter.press_bundle,
         )
         return await self.session_repo.save(session.model_copy(update={"quarter": next_quarter}))
 
@@ -207,3 +214,22 @@ class QuarterStateMachine:
 def _make_next_briefing(session: GameSession, quarter_number: int) -> Briefing:
     seed = f"{session.id}:{quarter_number}:{len(session.history)}"
     return _make_briefing(quarter_number, session.company, random.Random(seed))
+
+
+def _append_history_if_new(
+    history: list[HistoryEntry],
+    candidate: HistoryEntry,
+) -> list[HistoryEntry]:
+    if history and _history_entry_matches(history[-1], candidate):
+        return list(history)
+    return [*history, candidate]
+
+
+def _history_entry_matches(left: HistoryEntry, right: HistoryEntry) -> bool:
+    return (
+        left.quarter == right.quarter
+        and left.decision_id == right.decision_id
+        and left.stats_before == right.stats_before
+        and left.stats_after == right.stats_after
+        and left.settlement_summary == right.settlement_summary
+    )
