@@ -15,7 +15,9 @@ async def test_health_endpoints(client) -> None:
     assert health_payload["status"] == "ok"
     assert "ts" in health_payload
     assert isinstance(health_payload["components"], dict)
-    assert {"memory_repo", "llm_client"} <= set(health_payload["components"])
+    assert health_payload["components"]["session_repo"] == "ok"
+    assert health_payload["components"]["llm_client"] == "mock"
+    assert health_payload["components"]["version"] == "0.1.0"
 
     assert ready_response.status_code == 200
     assert ready_payload["status"] == "ready"

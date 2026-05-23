@@ -250,3 +250,4 @@ class ErrorOutbound(OutboundBase):
     code: str
     message: str
     retryable: bool
+    flags: list[str] = Field(default_factory=list)

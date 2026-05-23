@@ -30,8 +30,7 @@ async def test_same_player_can_create_three_sessions_and_list_them() -> None:
     player_id = str(uuid4())
 
     created = [
-        await service.create_new_run(player_id=player_id, rng_seed=21 + index)
-        for index in range(3)
+        await service.create_new_run(player_id=player_id, rng_seed=21 + index) for index in range(3)
     ]
     listed = await session_repo.list_by_player(player_id, limit=10)
 

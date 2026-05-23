@@ -11,3 +11,5 @@ def test_create_app_builds_routes() -> None:
     assert paths
     assert "/" in paths
     assert "/healthz" in paths
+    assert "/api/v1/games" in paths
+    assert "/api/v1/ws/{player_id}" in paths

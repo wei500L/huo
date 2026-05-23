@@ -5,8 +5,8 @@ from typing import Any
 
 from fastapi import APIRouter, Request
 
-from app import config as config_module
 from app.config import Settings
+from app.repo import protocols as repo_protocols
 
 __all__ = ["router"]
 
@@ -14,11 +14,16 @@ router = APIRouter(tags=["health"])
 
 
 def _components(settings: Settings | None = None) -> dict[str, str]:
-    resolved = settings or config_module.get_settings()
-    llm_ready = resolved.llm_mode == "mock" or bool(resolved.llm_endpoint)
+    resolved = settings or Settings()
+    try:
+        _ = repo_protocols.get_session_repo()
+        session_repo_status = "ok"
+    except Exception:
+        session_repo_status = "error"
     return {
-        "memory_repo": "ready",
-        "llm_client": "ready" if llm_ready else "not_ready",
+        "session_repo": session_repo_status,
+        "llm_client": resolved.llm_mode,
+        "version": "0.1.0",
     }
 
 
@@ -27,18 +32,14 @@ def _timestamp() -> str:
 
 
 @router.get("/healthz")
-async def healthz() -> dict[str, Any]:
-    """Return a basic liveness payload."""
-
-    components = _components()
+async def healthz(request: Request) -> dict[str, Any]:
+    components = _components(getattr(request.app.state, "settings", None))
     return {"status": "ok", "ts": _timestamp(), "components": components}
 
 
 @router.get("/readyz")
 async def readyz(request: Request) -> dict[str, Any]:
-    """Return a readiness payload using app state settings."""
-
     settings = getattr(request.app.state, "settings", None)
     components = _components(settings if isinstance(settings, Settings) else None)
-    status = "ready" if all(value == "ready" for value in components.values()) else "not_ready"
+    status = "ready" if components["session_repo"] == "ok" else "not_ready"
     return {"status": status, "ts": _timestamp(), "components": components}

@@ -72,13 +72,15 @@ class DeathReportService:
     async def generate(
         self,
         session_id: str,
-        death_reason: DeathReason | None,
+        death_reason: DeathReason | None = None,
     ) -> DeathReportBundle:
         session = await self.session_repo.get(session_id)
         if session is None:
             raise SessionNotFound(f"session not found: {session_id}")
         if session.status not in {"dead", "won"}:
             raise InvalidTerminalSession(f"session {session_id} is not terminal: {session.status}")
+        if death_reason is None and session.status == "dead":
+            death_reason = session.stats.is_dead()
 
         ctx = _build_death_context(session)
         prompt_reason = _prompt_reason(death_reason)
