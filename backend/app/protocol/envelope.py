@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Generic, TypeVar
 from uuid import UUID, uuid4
@@ -33,7 +33,7 @@ class Envelope(BaseModel, Generic[T]):
 
     v: int = 1
     id: str = Field(default_factory=lambda: str(uuid4()))
-    ts: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    ts: datetime = Field(default_factory=lambda: datetime.now(UTC))
     direction: MessageDirection
     type: str
     ack_for: str | None = None

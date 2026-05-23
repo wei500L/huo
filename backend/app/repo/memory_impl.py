@@ -119,7 +119,10 @@ class InMemoryPressArchiveRepo(PressArchiveRepo):
     async def list_by_session(self, session_id: str) -> list[PressBundle]:
         async with self._lock:
             archive_ids = list(self._session_index.get(session_id, []))
-            bundles = [self._bundles[archive_id].model_copy(deep=True) for archive_id in archive_ids]
+            bundles = [
+                self._bundles[archive_id].model_copy(deep=True)
+                for archive_id in archive_ids
+            ]
         return bundles
 
 
