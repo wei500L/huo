@@ -67,10 +67,10 @@ export const MainActionBar = ({ dimmed = false }: MainActionBarProps) => {
       {
         variant: "red" as const,
         icon: "money" as const,
-        label: "财务决策",
+        label: currentScreenId === "office" ? "拉高市场热度" : "财务决策",
         hotkey: "4" as const,
         badgeCount: badgeCounts.financialDecision,
-        onClick: () => pushScreen("decision"),
+        onClick: () => pushScreen(currentScreenId === "office" ? "press" : "decision"),
       },
     ],
     [

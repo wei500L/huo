@@ -8,6 +8,7 @@ import DecisionScreen from "./DecisionScreen";
 import PressScreen from "./PressScreen";
 import { OnboardingScreen } from "./OnboardingScreen";
 import OverviewScreen from "./OverviewScreen";
+import SettlementScreen from "./SettlementScreen";
 import { StatsDashboard } from "./StatsDashboard";
 
 const SCREEN_ORDER: ScreenId[] = [
@@ -76,7 +77,9 @@ export const DecisionPlaceholder: FC<Record<string, unknown>> = function Decisio
 export const PressPlaceholder: FC<Record<string, unknown>> = function PressPlaceholder() {
   return <PressScreen />;
 };
-export const SettlementPlaceholder = createPlaceholder(SCREEN_ORDER[7]);
+export const SettlementPlaceholder: FC<Record<string, unknown>> = function SettlementPlaceholder() {
+  return <SettlementScreen />;
+};
 export const OverviewPlaceholder: FC<Record<string, unknown>> = function OverviewPlaceholder() {
   return <OverviewScreen />;
 };

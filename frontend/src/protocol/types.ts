@@ -256,6 +256,7 @@ export interface DeathReportBundleDTO {
 }
 
 export interface ToastDTO {
+  id?: string;
   level: "info" | "warn" | "error";
   message: string;
   hint?: string;
