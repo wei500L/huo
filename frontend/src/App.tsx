@@ -20,7 +20,7 @@ export default function App() {
 
   useEffect(() => {
     setChrome(
-      current.id === "onboarding" || current.id === "death-report"
+      current.id === "onboarding" || current.id === "death-report" || current.id === "legacy-vault"
         ? { hud: true, mainBar: false }
         : { hud: true, mainBar: true },
     );

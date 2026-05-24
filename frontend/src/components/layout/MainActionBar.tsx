@@ -12,6 +12,10 @@ import { useScreenStore } from "@/store/screenStore";
 import { ContextHint } from "./contextHint/ContextHint";
 import { MainActionButton } from "./MainActionButton";
 
+export interface MainActionBarProps {
+  dimmed?: boolean;
+}
+
 const isEditableTarget = (target: EventTarget | null): boolean => {
   if (!(target instanceof HTMLElement)) {
     return false;
@@ -20,14 +24,14 @@ const isEditableTarget = (target: EventTarget | null): boolean => {
   return target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target.isContentEditable;
 };
 
-export const MainActionBar = () => {
+export const MainActionBar = ({ dimmed = false }: MainActionBarProps) => {
   const snapshot = useGameStore(selectCurrentSnapshot);
   const badgeCounts = useGameStore(selectMainActionBarBadgeCounts, shallow);
   const contextHint = useGameStore(selectMainActionBarContextHint, shallow);
   const pushScreen = useScreenStore((state) => state.push);
   const pushToast = useGameStore((state) => state.pushToast);
 
-  const isDisabled = snapshot?.status !== "active";
+  const isDisabled = snapshot?.status !== "active" || dimmed;
 
   const actions = useMemo(
     () => [
@@ -101,7 +105,12 @@ export const MainActionBar = () => {
   }, [actions, isDisabled]);
 
   return (
-    <footer className="flex h-[72px] items-center gap-px-md overflow-hidden border-t-2 border-stroke-ink bg-canvas px-px-base">
+      <footer
+        className={[
+          "flex h-[72px] items-center gap-px-md overflow-hidden border-t-2 border-stroke-ink bg-canvas px-px-base",
+          dimmed ? "bg-panel-dim opacity-70 grayscale" : "",
+        ].join(" ")}
+      >
       <span className="sr-only">MAIN BAR</span>
 
       {contextHint.text ? (

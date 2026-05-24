@@ -183,6 +183,7 @@ export const useGameStore = create<GameStoreState>()(
               ...state.snapshot,
               quarter: {
                 ...state.snapshot.quarter,
+                phase: "SETTLEMENT" as const,
                 pressInput,
               },
             },
@@ -191,6 +192,8 @@ export const useGameStore = create<GameStoreState>()(
         });
         if (rejected) {
           useScreenStore.getState().replace("press");
+        } else {
+          useScreenStore.getState().replace("settlement");
         }
       },
       ingestSettlementBundle: (b) => {
@@ -205,7 +208,7 @@ export const useGameStore = create<GameStoreState>()(
           const nextSnapshot = state.snapshot
             ? {
                 ...state.snapshot,
-                status: clean.death ? "dead" : state.snapshot.status,
+                status: clean.death ? "dead" : clean.quarterNumber >= 4 ? "won" : state.snapshot.status,
                 stats: clean.newStats,
                 history,
                 quarter: {
@@ -227,6 +230,9 @@ export const useGameStore = create<GameStoreState>()(
             inflight: { ...state.inflight, settleQuarter: false },
           };
         });
+        if (clean.death) {
+          useScreenStore.getState().replace("death-report");
+        }
       },
       ingestDeathBundle: (b) => {
         if (!isDeathBundleLike(b)) {
@@ -254,6 +260,7 @@ export const useGameStore = create<GameStoreState>()(
             inflight: { ...state.inflight, settleQuarter: false },
           };
         });
+        useScreenStore.getState().replace("death-report");
       },
       pushToast: (t) => {
         if (!isToastLike(t)) {

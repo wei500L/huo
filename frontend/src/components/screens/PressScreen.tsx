@@ -71,8 +71,7 @@ export function PressScreen() {
         message: error instanceof Error ? error.message : "发言提交失败",
       });
     });
-    replace("settlement");
-  }, [canSubmit, inflight.submitPress, pushToast, replace, sessionId, setInflight, transcript]);
+  }, [canSubmit, inflight.submitPress, pushToast, sessionId, setInflight, transcript]);
 
   const openSkipDialog = useCallback(() => setSkipDialogOpen(true), []);
   const closeSkipDialog = useCallback(() => setSkipDialogOpen(false), []);

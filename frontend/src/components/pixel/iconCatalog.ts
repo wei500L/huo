@@ -35,6 +35,10 @@ export const ICON_MAP = {
   scissors: () => import("pixelarticons/react/Scissors"), // 裁员
   handshake: () => import("pixelarticons/react/Hand"), // 融资
   megaphone: () => import("pixelarticons/react/Volume3"), // 隐瞒坏消息
+  leaf: () => import("pixelarticons/react/Leaf"), // 装饰叶片
+  scale: () => import("pixelarticons/react/Scale"), // 法务/平衡
+  file: () => import("pixelarticons/react/FileText"), // 文档
+  sparkle: () => import("pixelarticons/react/Sparkle"), // 闪光
 } as const;
 
 export type IconName = keyof typeof ICON_MAP;
@@ -76,6 +80,10 @@ export const ICON_EXPORT_NAMES: Record<IconName, string> = {
   scissors: "Scissors",
   handshake: "Hand",
   megaphone: "Volume3",
+  leaf: "Leaf",
+  scale: "Scale",
+  file: "FileText",
+  sparkle: "Sparkle",
 };
 
 export const EMOJI_FALLBACK: Record<IconName, string> = {
@@ -115,4 +123,8 @@ export const EMOJI_FALLBACK: Record<IconName, string> = {
   scissors: "✂️",
   handshake: "🤝",
   megaphone: "📣",
+  leaf: "🍃",
+  scale: "⚖️",
+  file: "📄",
+  sparkle: "✨",
 };
