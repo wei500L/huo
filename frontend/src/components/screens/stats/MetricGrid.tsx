@@ -74,7 +74,7 @@ const buildSparkline = (history: HistoryEntryDTO[], key: MetricKey, current: num
   return points.slice(-7);
 };
 
-const getMetricValue = (config: MetricConfig, stats: MetricGridStats, company?: CompanyDTO | null): number => {
+const getMetricValue = (config: MetricConfig, stats: MetricGridStats): number => {
   if (config.key === "SALES") {
     return stats.SALES ?? config.fallbackValue;
   }
@@ -108,7 +108,7 @@ export const MetricGrid = ({ stats, history, company }: MetricGridProps) => {
       {METRICS.map((metric) => {
         const isV2Metric = metric.key === "SALES" || metric.key === "MKT";
         const dimmed = isV2Metric && !metricV2Enabled;
-        const value = dimmed ? 0 : getMetricValue(metric, stats, company);
+        const value = dimmed ? 0 : getMetricValue(metric, stats);
 
         return (
           <PixelMetricCard

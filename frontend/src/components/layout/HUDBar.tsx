@@ -1,7 +1,6 @@
 import { PixelIcon } from "@/components/pixel";
 import { useGameStore } from "@/store/gameStore";
 import {
-  selectCurrentCompany,
   selectCurrentQuarter,
   selectCurrentSnapshot,
   selectCurrentStats,

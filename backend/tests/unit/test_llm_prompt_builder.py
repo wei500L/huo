@@ -23,7 +23,7 @@ def test_build_director_prompt_outputs_expected_bundle() -> None:
 
     assert isinstance(bundle, PromptBundle)
     assert bundle.prompt_kind == "director"
-    assert bundle.max_tokens == 800
+    assert bundle.max_tokens == 1200
     assert bundle.temperature == 0.7
     assert "总导演" in bundle.system
     assert all(
@@ -56,7 +56,7 @@ def test_build_press_eval_prompt_outputs_expected_bundle() -> None:
 
     assert isinstance(bundle, PromptBundle)
     assert bundle.prompt_kind == "press_eval"
-    assert bundle.max_tokens == 600
+    assert bundle.max_tokens == 800
     assert bundle.temperature == 0.6
     assert "```" in bundle.user
     assert bundle.user.count("    ```") == 2

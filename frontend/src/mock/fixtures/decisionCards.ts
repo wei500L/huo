@@ -4,7 +4,7 @@ export const DECISION_CARDS_V1: DecisionCardDTO[] = [
   {
     id: "q1-card-runway",
     category: "finance",
-    title: "冻结办公室补汤",
+    title: "融资续命",
     description: "先砍掉最显眼的非核心开支，保住下个季度的现金线。",
     immediateEffect: { cash: 12, morale: -8, board: 2, face: -4 },
     flavor: "一锅热汤，换一张更冷静的现金表。",
