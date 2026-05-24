@@ -28,6 +28,7 @@ export const MainActionBar = ({ dimmed = false }: MainActionBarProps) => {
   const snapshot = useGameStore(selectCurrentSnapshot);
   const badgeCounts = useGameStore(selectMainActionBarBadgeCounts, shallow);
   const contextHint = useGameStore(selectMainActionBarContextHint, shallow);
+  const currentScreenId = useScreenStore((state) => state.current.id);
   const pushScreen = useScreenStore((state) => state.push);
   const pushToast = useGameStore((state) => state.pushToast);
 
@@ -55,7 +56,7 @@ export const MainActionBar = ({ dimmed = false }: MainActionBarProps) => {
         variant: "orange" as const,
         icon: "trending-up" as const,
         label: "项目推进",
-        ariaLabel: "处理董事会关系",
+        ariaLabel: currentScreenId === "office" ? "处理董事会关系" : undefined,
         hotkey: "3" as const,
         badgeCount: badgeCounts.projectProgress,
         onClick: () => {
@@ -77,6 +78,7 @@ export const MainActionBar = ({ dimmed = false }: MainActionBarProps) => {
       badgeCounts.employeeCommunication,
       badgeCounts.financialDecision,
       badgeCounts.projectProgress,
+      currentScreenId,
       pushScreen,
       pushToast,
     ],

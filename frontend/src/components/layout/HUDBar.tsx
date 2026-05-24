@@ -62,7 +62,6 @@ export const HUDBar = () => {
   const snapshot = useGameStore(selectCurrentSnapshot);
   const stats = useGameStore(selectCurrentStats);
   const quarter = useGameStore(selectCurrentQuarter);
-  const company = useGameStore(selectCurrentCompany);
   const history = useGameStore(selectHistory);
   const push = useScreenStore((state) => state.push);
   const latestHistory = history[history.length - 1] ?? null;
