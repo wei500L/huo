@@ -118,9 +118,9 @@ class InboundEnvelope(BaseModel):
 
     @field_validator("direction", mode="before")
     @classmethod
-    def _normalize_direction(cls, value: str) -> str:
+    def _normalize_direction(cls, value: str) -> MessageDirection:
         if isinstance(value, str):
-            return value.upper()
+            return MessageDirection(value.upper())
         return value
 
     @field_validator("id")
