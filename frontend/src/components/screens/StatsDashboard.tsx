@@ -110,17 +110,17 @@ export const StatsDashboard = () => {
     setChrome({ hud: true, mainBar: true });
   }, [setChrome]);
 
-  const resolvedStats = stats ?? { CASH: 0, MORALE: 0, BOARD: 0, FACE: 0 };
+  const resolvedStats = stats ?? { cash: 0, morale: 0, board: 0, face: 0 };
   const history = snapshot?.history ?? [];
 
   const risks = useMemo(
     () =>
       buildRisks({
-        cash: resolvedStats.CASH,
-        board: resolvedStats.BOARD,
+        cash: resolvedStats.cash,
+        board: resolvedStats.board,
         promiseLog,
       }),
-    [promiseLog, resolvedStats.BOARD, resolvedStats.CASH],
+    [promiseLog, resolvedStats.board, resolvedStats.cash],
   );
 
   const hintText = hint.text || FALLBACK_HINT;
@@ -139,51 +139,53 @@ export const StatsDashboard = () => {
   };
 
   return (
-    <section className="flex h-full min-h-0 flex-col overflow-hidden bg-canvas px-px-md py-px-md text-ink-1">
-      <div className="mb-px-md flex items-center justify-between gap-px-md">
-        <div className="flex items-center gap-px-sm">
-          <span className="text-px-xl leading-none text-ink-1">六大核心数据</span>
-          <span className="flex items-center gap-1 text-pixel-orange" aria-hidden="true">
-            <PixelIcon name="star" size={16} ariaLabel="装饰星点" />
-            <PixelIcon name="star" size={16} ariaLabel="装饰星点" />
-            <PixelIcon name="star" size={16} ariaLabel="装饰星点" />
-          </span>
+    <section className="flex h-full min-h-0 flex-col overflow-auto bg-canvas px-px-md py-px-md text-ink-1">
+      <div className="mx-auto flex min-h-full w-full max-w-[1920px] flex-col gap-px-md">
+        <div className="flex flex-wrap items-center justify-between gap-px-md">
+          <div className="flex items-center gap-px-sm">
+            <span className="text-px-xl leading-none text-ink-1">六大核心数据</span>
+            <span className="flex items-center gap-1 text-pixel-orange" aria-hidden="true">
+              <PixelIcon name="star" size={16} ariaLabel="装饰星点" />
+              <PixelIcon name="star" size={16} ariaLabel="装饰星点" />
+              <PixelIcon name="star" size={16} ariaLabel="装饰星点" />
+            </span>
+          </div>
         </div>
-      </div>
 
-      <div className="grid min-h-0 flex-1 grid-cols-12 gap-px-md">
-        <div className="col-span-9 flex min-w-0 flex-col gap-px-md">
-          <MetricGrid stats={resolvedStats} history={history} company={company} />
+        <div className="grid min-h-0 flex-1 grid-cols-1 gap-px-md xl:grid-cols-[minmax(0,1.55fr)_minmax(300px,0.85fr)]">
+          <div className="flex min-w-0 flex-col gap-px-md">
+            <MetricGrid stats={resolvedStats} history={history} company={company} />
 
-          <div className="relative min-h-[136px]">
-            <div className="absolute bottom-0 left-0">
-              <PixelPortrait id="advisor" size="md" className="pointer-events-none" />
+            <div className="grid min-h-0 gap-px-md lg:grid-cols-[minmax(120px,160px)_minmax(0,1fr)]">
+              <div className="flex justify-center lg:justify-start">
+                <PixelPortrait id="advisor" size="md" className="pointer-events-none" />
+              </div>
+
+              <div className="flex min-h-[112px] items-end">
+                <div className="w-full max-w-[520px]">
+                  <PixelSpeechBubble tone="neutral" arrow="left" text={hintText} />
+                </div>
+              </div>
             </div>
 
-            <div className="ml-[148px] flex h-full min-h-[112px] items-end">
-              <div className="w-full max-w-[420px]">
-                <PixelSpeechBubble tone="neutral" arrow="left" text={hintText} />
+            <div className="flex justify-center">
+              <div className="w-full max-w-[320px]">
+                <PixelButton
+                  fullWidth
+                  size="lg"
+                  variant="blue"
+                  icon={<PixelIcon name="line-chart" size={24} ariaLabel="查看详细分析" />}
+                  onClick={handleDetail}
+                >
+                  查看详细分析
+                </PixelButton>
               </div>
             </div>
           </div>
 
-          <div className="flex justify-center">
-            <div className="w-full max-w-[320px]">
-              <PixelButton
-                fullWidth
-                size="lg"
-                variant="blue"
-                icon={<PixelIcon name="line-chart" size={24} ariaLabel="查看详细分析" />}
-                onClick={handleDetail}
-              >
-                查看详细分析
-              </PixelButton>
-            </div>
+          <div className="min-w-0">
+            <RiskPanel risks={risks} onViewAll={handleViewAllRisks} />
           </div>
-        </div>
-
-        <div className="col-span-3 min-w-0">
-          <RiskPanel risks={risks} onViewAll={handleViewAllRisks} />
         </div>
       </div>
     </section>

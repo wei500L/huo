@@ -211,9 +211,10 @@ export function SettlementScreen() {
           </aside>
         </main>
 
-        <footer className="flex flex-col items-center justify-center gap-2 py-2">
-          <div className="flex flex-wrap items-center justify-center gap-2">
+        <footer className="flex flex-col items-stretch justify-center gap-3 py-2">
+          <div className="grid gap-3 md:grid-cols-2">
             <PixelButton
+              fullWidth
               disabled={isPending}
               icon={<PixelIcon name={hasDeath ? "rip" : "forward"} size={24} />}
               size="lg"
@@ -223,7 +224,7 @@ export function SettlementScreen() {
               {hasDeath ? "查看死亡报告" : "进入下一季度"}
             </PixelButton>
 
-            <PixelButton icon={<PixelIcon name="line-chart" size={24} />} size="md" variant="ghost" onClick={() => push("stats-dashboard")}>
+            <PixelButton fullWidth icon={<PixelIcon name="line-chart" size={24} />} size="lg" variant="ghost" onClick={() => push("stats-dashboard")}>
               查看详细评分
             </PixelButton>
           </div>

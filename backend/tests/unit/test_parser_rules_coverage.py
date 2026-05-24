@@ -54,7 +54,7 @@ DIRECTOR_SCORES = {
     "logicClarity": 61,
     "confidence": 55,
     "riskAvoidance": 49,
-    "memorableQuote": 77,
+    "quotability": 77,
     "weaknessExposed": 58,
     "authenticity": 63,
 }
@@ -200,7 +200,7 @@ def test_parser_and_normalizer_heal_payloads() -> None:
             "logicClarity": 61,
             "confidence": 55,
             "riskAvoidance": 49,
-            "memorableQuote": 77,
+            "quotability": 77,
             "weaknessExposed": 58,
             "authenticity": 63,
         }

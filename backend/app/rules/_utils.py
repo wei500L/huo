@@ -30,6 +30,7 @@ GOSSIP_MOOD_POOL: tuple[str, ...] = (
     "numb",
     "excited",
     "in_love",
+    "neutral",
 )
 RIVAL_ACTION_POOL: tuple[str, ...] = (
     "price_war",

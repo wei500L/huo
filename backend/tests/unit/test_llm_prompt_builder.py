@@ -69,7 +69,7 @@ def test_build_press_eval_prompt_outputs_expected_bundle() -> None:
             "logicClarity",
             "confidence",
             "riskAvoidance",
-            "memorableQuote",
+            "quotability",
             "weaknessExposed",
             "authenticity",
         )

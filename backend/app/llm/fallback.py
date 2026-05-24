@@ -53,7 +53,7 @@ _PRESS_EVAL_STUB = {
         "logicClarity": 69,
         "confidence": 63,
         "riskAvoidance": 71,
-        "memorableQuote": 79,
+        "quotability": 79,
         "weaknessExposed": 58,
         "authenticity": 67,
     },

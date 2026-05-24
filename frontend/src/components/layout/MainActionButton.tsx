@@ -41,7 +41,8 @@ export const MainActionButton = ({
       disabled={disabled}
       onClick={disabled ? undefined : onClick}
       className={clsx(
-        "relative flex h-14 min-w-0 flex-1 items-center gap-2 border-2 px-3 pr-8 font-pixel text-px-md leading-none pixel-render",
+        "relative flex min-h-16 min-w-0 flex-1 items-center gap-2 border-2 px-4 pr-9 font-pixel text-px-sm leading-none pixel-render",
+        "sm:text-px-base lg:h-16 lg:text-px-md",
         "transition-transform duration-75 ease-out transition-shadow",
         disabled
           ? "cursor-not-allowed border-stroke-ink bg-panel-dim text-ink-3 shadow-none"
@@ -51,7 +52,7 @@ export const MainActionButton = ({
               VARIANT_CLASS[variant],
             ),
       )}
-    >
+      >
       <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center">
         <PixelIcon color="currentColor" name={icon} size={24} />
       </span>
@@ -61,13 +62,13 @@ export const MainActionButton = ({
       {hasBadge ? (
         <span
           aria-label={`${label} ${formatBadgeCount(badgeCount)}`}
-          className="absolute right-1 top-1 flex h-[14px] w-[14px] items-center justify-center border border-stroke-ink bg-alarm-red font-retro text-[8px] leading-none text-white"
+          className="absolute right-1 top-1 hidden h-[14px] w-[14px] items-center justify-center border border-stroke-ink bg-alarm-red font-retro text-[8px] leading-none text-white lg:flex"
         >
           {formatBadgeCount(badgeCount)}
         </span>
       ) : null}
 
-      <span className="absolute bottom-1 right-2 font-retro text-[10px] leading-none text-current">
+      <span className="absolute bottom-1 right-2 hidden font-retro text-[10px] leading-none text-current lg:block">
         {hotkey}
       </span>
     </button>

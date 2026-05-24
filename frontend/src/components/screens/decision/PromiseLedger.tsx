@@ -20,7 +20,7 @@ export const PromiseLedger = ({ promises, rating = "B+", expectedReturnPerQuarte
   const visiblePromises = promises.slice(0, 4);
 
   return (
-    <PixelCard className="h-full min-h-[520px]" kind="default" title="画饼总账">
+    <PixelCard className="h-full min-h-[420px] lg:min-h-[520px]" kind="default" title="画饼总账">
       <div className="flex h-full flex-col gap-px-lg">
         <section className="border-b-2 border-stroke-ink pb-px-md">
           <div className="text-px-sm text-ink-2">当前画饼评级</div>

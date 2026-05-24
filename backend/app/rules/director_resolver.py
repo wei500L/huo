@@ -119,7 +119,7 @@ class DirectorResolver:
                 speaker=clamp_text(raw.employeeGossip.speaker, 6),
                 line=clamp_text(raw.employeeGossip.line, 35),
                 mood=cast(
-                    Literal["anxious", "angry", "tired", "hopeful", "numb", "excited", "in_love"],
+                    Literal["anxious", "angry", "tired", "hopeful", "numb", "excited", "in_love", "neutral"],
                     normalize_mood(raw.employeeGossip.mood),
                 ),
             ),

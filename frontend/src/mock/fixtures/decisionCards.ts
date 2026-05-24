@@ -6,7 +6,7 @@ export const DECISION_CARDS_V1: DecisionCardDTO[] = [
     category: "finance",
     title: "冻结办公室补汤",
     description: "先砍掉最显眼的非核心开支，保住下个季度的现金线。",
-    immediateEffect: { CASH: 12, MORALE: -8, BOARD: 2, FACE: -4 },
+    immediateEffect: { cash: 12, morale: -8, board: 2, face: -4 },
     flavor: "一锅热汤，换一张更冷静的现金表。",
     longTermHint: "财务团队会松一口气，但办公室会更安静。",
   },
@@ -15,7 +15,7 @@ export const DECISION_CARDS_V1: DecisionCardDTO[] = [
     category: "brand",
     title: "宣布 NoodleOS",
     description: "先把故事讲出去，再想办法把产品做出来。",
-    immediateEffect: { CASH: 4, MORALE: -5, BOARD: 6, FACE: 10 },
+    immediateEffect: { cash: 4, morale: -5, board: 6, face: 10 },
     flavor: "九页幻灯片，零个可执行原型。",
     longTermHint: "媒体会问你，面条系统到底长什么样。",
   },
@@ -24,7 +24,7 @@ export const DECISION_CARDS_V1: DecisionCardDTO[] = [
     category: "board",
     title: "申请董事会缓冲",
     description: "把压力摊开讲，让董事会先别做激烈动作。",
-    immediateEffect: { CASH: 3, MORALE: -2, BOARD: 5, FACE: -3 },
+    immediateEffect: { cash: 3, morale: -2, board: 5, face: -3 },
     flavor: "先稳住桌面上的杯子，再谈风向。",
   },
   {
@@ -32,7 +32,7 @@ export const DECISION_CARDS_V1: DecisionCardDTO[] = [
     category: "product",
     title: "转向企业食堂",
     description: "把产品定位改成更容易成交的企业餐饮方案。",
-    immediateEffect: { CASH: 9, MORALE: -4, BOARD: 4, FACE: -1 },
+    immediateEffect: { cash: 9, morale: -4, board: 4, face: -1 },
     flavor: "从理想菜单切到能签单的菜单。",
   },
   {
@@ -40,7 +40,7 @@ export const DECISION_CARDS_V1: DecisionCardDTO[] = [
     category: "people",
     title: "小幅裁员止血",
     description: "删掉冗余岗位，换取更长的 runway。",
-    immediateEffect: { CASH: 16, MORALE: -15, BOARD: 1, FACE: -6 },
+    immediateEffect: { cash: 16, morale: -15, board: 1, face: -6 },
     flavor: "账面轻一点，办公室重一点。",
   },
   {
@@ -48,7 +48,7 @@ export const DECISION_CARDS_V1: DecisionCardDTO[] = [
     category: "people",
     title: "集中安抚团队",
     description: "开诚布公地解释现状，压住离职波动。",
-    immediateEffect: { CASH: -2, MORALE: 9, BOARD: 0, FACE: 2 },
+    immediateEffect: { cash: -2, morale: 9, board: 0, face: 2 },
     flavor: "先把人心稳住，再谈增长幻觉。",
   },
   {
@@ -56,7 +56,7 @@ export const DECISION_CARDS_V1: DecisionCardDTO[] = [
     category: "pr",
     title: "用事实压住发布会",
     description: "尽量少承诺，只回答能验证的问题。",
-    immediateEffect: { CASH: 1, MORALE: -3, BOARD: 4, FACE: 6 },
+    immediateEffect: { cash: 1, morale: -3, board: 4, face: 6 },
     flavor: "每个句子都像审计报表一样保守。",
   },
   {
@@ -64,7 +64,7 @@ export const DECISION_CARDS_V1: DecisionCardDTO[] = [
     category: "pr",
     title: "强硬回击质疑",
     description: "主动抢节奏，把媒体压力改写成攻势。",
-    immediateEffect: { CASH: -1, MORALE: -4, BOARD: 6, FACE: 9 },
+    immediateEffect: { cash: -1, morale: -4, board: 6, face: 9 },
     flavor: "话锋很硬，后续风险也很硬。",
   },
   {
@@ -72,7 +72,7 @@ export const DECISION_CARDS_V1: DecisionCardDTO[] = [
     category: "sales",
     title: "临时路演融资",
     description: "把发布会包装成再融资前的信号场。",
-    immediateEffect: { CASH: 10, MORALE: -6, BOARD: 5, FACE: -2 },
+    immediateEffect: { cash: 10, morale: -6, board: 5, face: -2 },
     flavor: "讲故事的速度比烧钱的速度更快。",
   },
   {
@@ -80,7 +80,7 @@ export const DECISION_CARDS_V1: DecisionCardDTO[] = [
     category: "finance",
     title: "寻求救援合并",
     description: "主动找更大的玩家接盘，换取团队续命。",
-    immediateEffect: { CASH: 8, MORALE: -8, BOARD: 7, FACE: -5 },
+    immediateEffect: { cash: 8, morale: -8, board: 7, face: -5 },
     flavor: "体面地把方向盘交出去。",
   },
   {
@@ -88,7 +88,7 @@ export const DECISION_CARDS_V1: DecisionCardDTO[] = [
     category: "board",
     title: "正面回击罢免",
     description: "试着说服董事会，最后再给一次窗口。",
-    immediateEffect: { CASH: -3, MORALE: -6, BOARD: 8, FACE: 4 },
+    immediateEffect: { cash: -3, morale: -6, board: 8, face: 4 },
     flavor: "你和董事会都知道，这是一场最后的拉扯。",
   },
   {
@@ -96,7 +96,7 @@ export const DECISION_CARDS_V1: DecisionCardDTO[] = [
     category: "strategy",
     title: "重新定义胜利",
     description: "把终局目标写成更现实的版本。",
-    immediateEffect: { CASH: 2, MORALE: 4, BOARD: 2, FACE: 1 },
+    immediateEffect: { cash: 2, morale: 4, board: 2, face: 1 },
     flavor: "不是翻盘，是重新找一个能活的版本。",
   },
 ];

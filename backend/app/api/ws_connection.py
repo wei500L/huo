@@ -12,6 +12,7 @@ from uuid import UUID, uuid4
 
 from fastapi import WebSocket
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic.alias_generators import to_camel
 
 from app.protocol import (
     AckPayload,
@@ -105,7 +106,7 @@ connection_manager = ConnectionManager()
 
 
 class InboundEnvelope(BaseModel):
-    model_config = ConfigDict(strict=True, extra="forbid")
+    model_config = ConfigDict(strict=True, extra="forbid", populate_by_name=True, alias_generator=to_camel)
 
     v: int = 1
     id: str = Field(default_factory=lambda: str(uuid4()))
@@ -114,6 +115,13 @@ class InboundEnvelope(BaseModel):
     type: str
     ack_for: str | None = None
     payload: dict[str, Any]
+
+    @field_validator("direction", mode="before")
+    @classmethod
+    def _normalize_direction(cls, value: str) -> str:
+        if isinstance(value, str):
+            return value.upper()
+        return value
 
     @field_validator("id")
     @classmethod
@@ -140,6 +148,8 @@ async def _snapshot_for_session(
         quarter=session.quarter,
         history=session.history,
         meta_progress=await meta_repo.get(session.player_id),
+        promise_log=session.promise_log,
+        status=session.status,
     )
 
 
@@ -159,6 +169,7 @@ def _wrap_outbound(
 
 def _envelope_json(envelope: Envelope[BaseModel]) -> str:
     data = envelope.model_dump(mode="json", by_alias=True)
+    data["direction"] = data["direction"].lower()
     if isinstance(envelope.payload, BaseModel):
         data["payload"] = envelope.payload.model_dump(mode="json", by_alias=True)
     return json.dumps(data, ensure_ascii=False)

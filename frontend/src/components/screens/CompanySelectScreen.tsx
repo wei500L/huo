@@ -9,6 +9,7 @@ import { useScreenStore } from "@/store/screenStore";
 import { CompanyChoiceCard, type CompanyChoice } from "./companySelect/CompanyChoiceCard";
 import type { MilestoneItem } from "./companySelect/MilestoneList";
 import { RevengeProgressPanel, type RevengeProgressMeta } from "./companySelect/RevengeProgressPanel";
+import { ResourceShelf } from "./companySelect/ResourceShelf";
 
 const companySelectDataSource = createMockDataSource();
 void companySelectDataSource.connect("company-select-ceo");
@@ -161,6 +162,8 @@ export const CompanySelectScreen = () => {
             <RevengeProgressPanel className="min-h-[480px]" meta={MOCK_META_PROGRESS} milestones={MILESTONES} />
           </div>
         </section>
+
+        <ResourceShelf />
 
         <section className="relative flex min-h-[220px] shrink-0 flex-col justify-end gap-px-md lg:block lg:min-h-[172px]">
           <div className="max-w-[min(100%,420px)] lg:absolute lg:bottom-8 lg:left-0">

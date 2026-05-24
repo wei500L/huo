@@ -20,21 +20,21 @@ interface MetricConfig {
 }
 
 const METRICS: MetricConfig[] = [
-  { key: "CASH", label: "现金流", iconName: "money", variant: "blue", fallbackValue: 0 },
-  { key: "MORALE", label: "士气", iconName: "morale", variant: "green", fallbackValue: 0 },
-  { key: "BOARD", label: "董事会信任", iconName: "board", variant: "orange", fallbackValue: 0 },
+  { key: "cash", label: "现金流", iconName: "money", variant: "blue", fallbackValue: 0 },
+  { key: "morale", label: "士气", iconName: "morale", variant: "green", fallbackValue: 0 },
+  { key: "board", label: "董事会信任", iconName: "board", variant: "orange", fallbackValue: 0 },
   { key: "SALES", label: "员工人数", iconName: "users", variant: "purple", fallbackValue: 0 },
   { key: "MKT", label: "市场热度", iconName: "trending-up", variant: "red", fallbackValue: 0 },
-  { key: "FACE", label: "公司体面", iconName: "face", variant: "gold", fallbackValue: 0 },
+  { key: "face", label: "公司体面", iconName: "face", variant: "gold", fallbackValue: 0 },
 ];
 
 const METRIC_STATUS: Record<MetricKey, (value: number, dimmed: boolean) => string> = {
-  CASH: (value) => (value < 30 ? "危险" : value < 55 ? "承压" : "健康"),
-  MORALE: (value) => (value < 35 ? "低迷" : value < 60 ? "中立" : "稳定"),
-  BOARD: (value) => (value < 50 ? "耐心下降" : value < 70 ? "观望" : "信任良好"),
+  cash: (value) => (value < 30 ? "危险" : value < 55 ? "承压" : "健康"),
+  morale: (value) => (value < 35 ? "低迷" : value < 60 ? "中立" : "稳定"),
+  board: (value) => (value < 50 ? "耐心下降" : value < 70 ? "观望" : "信任良好"),
   SALES: (_value, dimmed) => (dimmed ? "v2 开放" : "团队在线"),
   MKT: (_value, dimmed) => (dimmed ? "v2 开放" : "热度追踪"),
-  FACE: (value) => (value < 30 ? "危险" : value < 55 ? "普通" : "体面良好"),
+  face: (value) => (value < 30 ? "危险" : value < 55 ? "普通" : "体面良好"),
 };
 
 const isMetricV2Enabled = (): boolean => {
@@ -104,7 +104,7 @@ export const MetricGrid = ({ stats, history, company }: MetricGridProps) => {
   const metricV2Enabled = isMetricV2Enabled();
 
   return (
-    <section aria-label="六大核心数据" className="grid grid-cols-3 gap-px-md">
+    <section aria-label="六大核心数据" className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-px-md">
       {METRICS.map((metric) => {
         const isV2Metric = metric.key === "SALES" || metric.key === "MKT";
         const dimmed = isV2Metric && !metricV2Enabled;

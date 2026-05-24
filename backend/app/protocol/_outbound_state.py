@@ -6,7 +6,7 @@ from typing import Literal
 
 from pydantic import Field
 
-from app.domain import DeathReason, GossipLead, HistoryEntry, LegacyUnlock, MetaProgress, Quarter
+from app.domain import DeathReason, GossipLead, HistoryEntry, LegacyUnlock, MetaProgress, Promise, Quarter
 
 from ._outbound_base import OutboundBase
 from ._outbound_core import (
@@ -25,6 +25,8 @@ __all__ = (
     "LastEmployeeDTO",
     "LegacyUnlockDTO",
     "MetaSummaryDTO",
+    "PromiseDTO",
+    "PromiseTargetDTO",
     "QuarterDTO",
 )
 
@@ -156,4 +158,51 @@ class MetaSummaryDTO(OutboundBase):
             unlocked_styles=[style.value for style in progress.unlocked_styles],
             death_log_count=len(progress.death_log),
             press_archive_count=len(progress.press_archive),
+        )
+
+
+class PromiseTargetDTO(OutboundBase):
+    metric: str
+    target_expr: str
+    deadline_quarter: int | None = None
+
+    @classmethod
+    def from_domain(cls, target: "Promise") -> PromiseTargetDTO:
+        parsed = target.parsed
+        if parsed is None:
+            raise ValueError("Cannot convert None parsed target")
+        return cls(
+            metric=parsed.metric,
+            target_expr=parsed.target_expr,
+            deadline_quarter=parsed.deadline_quarter,
+        )
+
+
+class PromiseDTO(OutboundBase):
+    id: str
+    quarter_made: int
+    source: str
+    text: str
+    fulfilled: bool | None = None
+    judged_at_quarter: int | None = None
+    parsed: PromiseTargetDTO | None = None
+
+    @classmethod
+    def from_domain(cls, promise: Promise) -> PromiseDTO:
+        return cls(
+            id=promise.id,
+            quarter_made=promise.quarter_made,
+            source=promise.source.value,
+            text=promise.text,
+            fulfilled=promise.fulfilled,
+            judged_at_quarter=promise.judged_at_quarter,
+            parsed=(
+                PromiseTargetDTO(
+                    metric=promise.parsed.metric,
+                    target_expr=promise.parsed.target_expr,
+                    deadline_quarter=promise.parsed.deadline_quarter,
+                )
+                if promise.parsed is not None
+                else None
+            ),
         )

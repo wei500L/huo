@@ -5,6 +5,7 @@ import { createMockDataSource } from "@/net/mockAdapter";
 import { makeEnvelope } from "@/protocol/envelope";
 import type { CollectGossipPayload } from "@/protocol/inbound";
 import type { GossipScene as GossipSceneName } from "@/protocol/types";
+import { useElementSize } from "@/hooks/useElementSize";
 import { useGameStore } from "@/store/gameStore";
 import {
   selectAPRemaining,
@@ -64,6 +65,9 @@ export function GossipScene({ scene }: GossipSceneProps) {
   const pushToast = useGameStore((state) => state.pushToast);
   const back = useScreenStore((state) => state.back);
   const setChrome = useScreenStore((state) => state.setChrome);
+  const viewportRef = useRef<HTMLDivElement | null>(null);
+  const viewportSize = useElementSize(viewportRef);
+  const scale = viewportSize.width > 0 ? Math.min(1, Math.max(0.64, (viewportSize.width - 16) / 1280)) : 1;
   const initialRequestSentRef = useRef(false);
   const apEmptyToastShownRef = useRef(false);
   const initialKey = `${sessionId ?? "no-session"}:${quarter?.number ?? "no-quarter"}:${normalizedScene}`;
@@ -193,39 +197,50 @@ export function GossipScene({ scene }: GossipSceneProps) {
 
   return (
     <section className="relative h-full min-h-[720px] overflow-auto bg-canvas p-px-md">
-      <div className="relative mx-auto h-[640px] w-[1280px]">
-        <SceneStage />
+      <div ref={viewportRef} className="w-full">
+        <div className="mx-auto" style={{ width: `${1280 * scale}px`, height: `${640 * scale}px` }}>
+          <div
+            className="relative origin-top-left"
+            style={{
+              width: "1280px",
+              height: "640px",
+              transform: `scale(${scale})`,
+            }}
+          >
+            <SceneStage />
 
-        <div className="absolute bottom-0 left-[42px] z-10 w-[320px]">
-          <PixelPortrait
-            bounce
-            className="drop-shadow-[4px_4px_0_var(--stroke-ink)]"
-            expression="smile"
-            id={LIN_XIAOMAN_ID}
-            position="inline"
-            size="hero"
-          />
-          <div className="border-2 border-stroke-ink bg-panel px-px-md py-px-sm shadow-hard">
-            <div className="mb-px-sm text-px-md leading-none">林小满</div>
-            <TrustBar size="md" value={trust} />
+            <div className="absolute bottom-0 left-[42px] z-10 w-[320px]">
+              <PixelPortrait
+                bounce
+                className="drop-shadow-[4px_4px_0_var(--stroke-ink)]"
+                expression="smile"
+                id={LIN_XIAOMAN_ID}
+                position="inline"
+                size="hero"
+              />
+              <div className="border-2 border-stroke-ink bg-panel px-px-md py-px-sm shadow-hard">
+                <div className="mb-px-sm text-px-md leading-none">林小满</div>
+                <TrustBar size="md" value={trust} />
+              </div>
+            </div>
+
+            <div className="absolute right-[36px] top-[96px] z-10 w-[282px]">
+              <ActionPanel actions={actions} apRemaining={apRemaining} apTotal={AP_TOTAL} />
+            </div>
+
+            <div className="absolute bottom-[28px] left-[384px] z-10 w-[560px]">
+              <PixelSpeechBubble
+                arrow="left"
+                speaker={{ name: "林小满", role: "市场部专员" }}
+                text={currentLead?.text ?? "茶水间里有人压低了声音，新的传闻正在路上。"}
+                tone="friendly"
+                typewriter={Boolean(currentLead)}
+              />
+            </div>
+
+            <GossipNotesDrawer notes={notes} />
           </div>
         </div>
-
-        <div className="absolute right-[36px] top-[96px] z-10 w-[282px]">
-          <ActionPanel actions={actions} apRemaining={apRemaining} apTotal={AP_TOTAL} />
-        </div>
-
-        <div className="absolute bottom-[28px] left-[384px] z-10 w-[560px]">
-          <PixelSpeechBubble
-            arrow="left"
-            speaker={{ name: "林小满", role: "市场部专员" }}
-            text={currentLead?.text ?? "茶水间里有人压低了声音，新的传闻正在路上。"}
-            tone="friendly"
-            typewriter={Boolean(currentLead)}
-          />
-        </div>
-
-        <GossipNotesDrawer notes={notes} />
       </div>
     </section>
   );

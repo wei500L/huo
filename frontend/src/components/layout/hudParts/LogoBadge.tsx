@@ -3,14 +3,14 @@ import { Sparkles } from "pixelarticons/react/Sparkles";
 export const LogoBadge = () => {
   return (
     <div
-      className="relative h-12 w-[176px] shrink-0 overflow-visible border-2 border-stroke-ink bg-exp-gold shadow-hard-sm"
+      className="relative h-11 w-[148px] shrink-0 overflow-visible border-2 border-stroke-ink bg-exp-gold shadow-hard-sm sm:h-12 sm:w-[176px]"
       style={{ transform: "skewX(-8deg)" }}
     >
       <div
         className="flex h-full w-full items-center justify-between gap-2 px-3"
         style={{ transform: "skewX(8deg)" }}
       >
-        <span className="whitespace-nowrap font-retro text-px-xl leading-none text-ink-1">
+        <span className="whitespace-nowrap font-retro text-px-lg leading-none text-ink-1 sm:text-px-xl">
           YES,BOSS!
         </span>
       </div>

@@ -105,12 +105,13 @@ export const MainActionBar = ({ dimmed = false }: MainActionBarProps) => {
   }, [actions, isDisabled]);
 
   return (
-      <footer
-        className={[
-          "flex h-[72px] items-center gap-px-md overflow-hidden border-t-2 border-stroke-ink bg-canvas px-px-base",
-          dimmed ? "bg-panel-dim opacity-70 grayscale" : "",
-        ].join(" ")}
-      >
+    <footer
+      className={[
+        "flex flex-col gap-3 overflow-hidden border-t-2 border-stroke-ink bg-canvas px-3 py-3 sm:px-4",
+        "lg:h-[88px] lg:flex-row lg:items-center lg:py-0",
+        dimmed ? "bg-panel-dim opacity-70 grayscale" : "",
+      ].join(" ")}
+    >
       <span className="sr-only">MAIN BAR</span>
 
       {contextHint.text ? (
@@ -119,7 +120,7 @@ export const MainActionBar = ({ dimmed = false }: MainActionBarProps) => {
         </div>
       ) : null}
 
-      <div className="flex min-w-0 flex-1 gap-px-md">
+      <div className="grid min-w-0 flex-1 grid-cols-2 gap-3 lg:flex lg:grid-cols-none">
         {actions.map((action) => (
           <MainActionButton
             key={action.label}

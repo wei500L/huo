@@ -9,6 +9,7 @@ from typing import Generic, TypeVar
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic.alias_generators import to_camel
 
 __all__ = ("AckPayload", "Envelope", "MessageDirection")
 
@@ -21,7 +22,7 @@ class MessageDirection(StrEnum):
 
 
 class AckPayload(BaseModel):
-    model_config = ConfigDict(strict=True, extra="forbid")
+    model_config = ConfigDict(strict=True, extra="forbid", populate_by_name=True, alias_generator=to_camel)
 
     ok: bool
     reason: str | None = None
@@ -29,7 +30,7 @@ class AckPayload(BaseModel):
 
 
 class Envelope(BaseModel, Generic[T]):
-    model_config = ConfigDict(strict=True, extra="forbid")
+    model_config = ConfigDict(strict=True, extra="forbid", populate_by_name=True, alias_generator=to_camel)
 
     v: int = 1
     id: str = Field(default_factory=lambda: str(uuid4()))
@@ -38,6 +39,13 @@ class Envelope(BaseModel, Generic[T]):
     type: str
     ack_for: str | None = None
     payload: T
+
+    @field_validator("direction", mode="before")
+    @classmethod
+    def _normalize_direction(cls, value: str) -> str:
+        if isinstance(value, str):
+            return value.upper()
+        return value
 
     @field_validator("id")
     @classmethod

@@ -1,8 +1,8 @@
 export interface StatsDTO {
-  CASH: number;
-  MORALE: number;
-  BOARD: number;
-  FACE: number;
+  cash: number;
+  morale: number;
+  board: number;
+  face: number;
 }
 
 export type QuarterPhase = "BRIEFING" | "GOSSIP" | "DECISION" | "PRESS" | "SETTLEMENT" | "DONE";
@@ -36,10 +36,10 @@ export interface CompanyDTO {
   id: string;
   name: string;
   business: string;
-  employeeCount?: number;
   absurdity: number;
   foundingMotto: string;
   deathCauses: DeathCauseDTO[];
+  startingPromises: string[];
   foundedYear: number;
 }
 
@@ -64,6 +64,7 @@ export interface DecisionCardDTO {
   immediateEffect: Partial<StatsDTO>;
   flavor: string;
   longTermHint?: string;
+  boomerangSeeds?: { delayQuarters: number; probability: number; description: string; effect: Partial<StatsDTO> }[];
 }
 
 export interface GossipLeadDTO {
@@ -141,6 +142,7 @@ export interface SettlementDTO {
   rivalAction: RivalActionDTO;
   marketSignal: string;
   metricsDelta: Partial<StatsDTO>;
+  scheduledEventsAdded?: string[];
 }
 
 export interface HistoryEntryDTO {
@@ -176,10 +178,12 @@ export interface LegacyUnlockDTO {
 }
 
 export interface MetaSummaryDTO {
-  playerId: string;
+  schemaVersion: number;
   totalRuns: number;
   unlockedLegacies: LegacyUnlockDTO[];
   unlockedStyles: string[];
+  deathLogCount: number;
+  pressArchiveCount: number;
 }
 
 export interface QuarterDTO {
@@ -188,6 +192,7 @@ export interface QuarterDTO {
   briefing?: BriefingDTO;
   decisionCards: DecisionCardDTO[];
   selectedDecisionId?: string;
+  gossipCollected: string[];
   pressInput?: PressInputDTO;
   pressBundle?: PressBundleDTO;
   settlement?: SettlementDTO;
@@ -236,7 +241,7 @@ export interface SettlementBundleDTO {
   pressBundle?: PressBundleDTO;
   newStats: StatsDTO;
   historyAdded: HistoryEntryDTO;
-  death?: { reason: string; title: string };
+  death?: { code: string; labelZh: string } | null;
   llmDegraded: boolean;
 }
 
@@ -251,7 +256,6 @@ export interface DeathReportBundleDTO {
 }
 
 export interface ToastDTO {
-  id: string;
   level: "info" | "warn" | "error";
   message: string;
   hint?: string;

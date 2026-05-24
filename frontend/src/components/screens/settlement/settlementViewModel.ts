@@ -3,24 +3,24 @@ import type { SettlementDTO, PromiseDTO } from "@/protocol/types";
 import type { BoardCommentItem } from "./BoardCommentCard";
 import type { PromiseResultItem } from "./PromiseResultList";
 
-export type MetricKey = "CASH" | "MORALE" | "BOARD" | "FACE";
+export type MetricKey = "cash" | "morale" | "board" | "face";
 
-export const METRIC_ORDER: MetricKey[] = ["CASH", "MORALE", "BOARD", "FACE"];
+export const METRIC_ORDER: MetricKey[] = ["cash", "morale", "board", "face"];
 
 export const METRIC_CONFIG: Record<MetricKey, { label: string; iconName: "money" | "morale" | "board" | "face" }> = {
-  CASH: { label: "现金流", iconName: "money" },
-  MORALE: { label: "士气", iconName: "morale" },
-  BOARD: { label: "董事会信任", iconName: "board" },
-  FACE: { label: "公司体面", iconName: "face" },
+  cash: { label: "现金流", iconName: "money" },
+  morale: { label: "士气", iconName: "morale" },
+  board: { label: "董事会信任", iconName: "board" },
+  face: { label: "公司体面", iconName: "face" },
 };
 
 export const isMetricKey = (value: string | undefined): value is MetricKey => {
-  return value === "CASH" || value === "MORALE" || value === "BOARD" || value === "FACE";
+  return value === "cash" || value === "morale" || value === "board" || value === "face";
 };
 
 export const formatMetricValue = (metricKey: MetricKey, value: number): string => {
   const formatted = Math.trunc(value).toLocaleString("zh-CN");
-  return metricKey === "CASH" ? `¥${formatted}` : formatted;
+  return metricKey === "cash" ? `¥${formatted}` : formatted;
 };
 
 export const formatMetricDelta = (metricKey: MetricKey, delta: number): string => {
@@ -42,22 +42,22 @@ export const resolveMetricStatus = (
   delta: number,
 ): { text: string; color: "green" | "yellow" | "red" } => {
   if (delta === 0) {
-    if (metricKey === "CASH") return { text: "表现平稳", color: "yellow" };
-    if (metricKey === "MORALE") return { text: "士气稳定", color: "yellow" };
-    if (metricKey === "BOARD") return { text: "信任持平", color: "yellow" };
+    if (metricKey === "cash") return { text: "表现平稳", color: "yellow" };
+    if (metricKey === "morale") return { text: "士气稳定", color: "yellow" };
+    if (metricKey === "board") return { text: "信任持平", color: "yellow" };
     return { text: "体面持平", color: "yellow" };
   }
 
   if (delta > 0) {
-    if (metricKey === "CASH") return { text: "表现良好", color: "green" };
-    if (metricKey === "MORALE") return { text: "士气回升", color: "green" };
-    if (metricKey === "BOARD") return { text: "信任回升", color: "green" };
+    if (metricKey === "cash") return { text: "表现良好", color: "green" };
+    if (metricKey === "morale") return { text: "士气回升", color: "green" };
+    if (metricKey === "board") return { text: "信任回升", color: "green" };
     return { text: "体面回暖", color: "green" };
   }
 
-  if (metricKey === "MORALE") return { text: "士气下滑", color: "red" };
-  if (metricKey === "BOARD") return { text: "信任下降", color: "red" };
-  if (metricKey === "FACE") return { text: "体面受损", color: "red" };
+  if (metricKey === "morale") return { text: "士气下滑", color: "red" };
+  if (metricKey === "board") return { text: "信任下降", color: "red" };
+  if (metricKey === "face") return { text: "体面受损", color: "red" };
   return { text: "表现下滑", color: "red" };
 };
 
@@ -85,8 +85,8 @@ export const buildPromiseRows = (params: {
 }): PromiseResultItem[] => {
   const rows = params.promiseLog.slice(0, 4).map((promise, index) => {
     const status = promise.fulfilled === true ? "fulfilled" : promise.fulfilled === false ? "failed" : "in_progress";
-    const parsedMetric = promise.parsed?.metric?.toUpperCase();
-    const metricKey: MetricKey = isMetricKey(parsedMetric) ? parsedMetric : METRIC_ORDER[index] ?? "CASH";
+    const parsedMetric = promise.parsed?.metric?.toLowerCase();
+    const metricKey: MetricKey = isMetricKey(parsedMetric) ? parsedMetric : METRIC_ORDER[index] ?? "cash";
     const deltaValue = params.metricsDelta?.[metricKey];
     const delta = typeof deltaValue === "number" ? formatMetricDelta(metricKey, deltaValue) : "—";
 

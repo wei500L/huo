@@ -112,10 +112,10 @@ const isBoolean = (value: unknown): value is boolean => typeof value === "boolea
 
 const isStatsLike = (value: unknown): value is Record<string, unknown> =>
   isRecord(value) &&
-  isFiniteNumber(value.CASH) &&
-  isFiniteNumber(value.MORALE) &&
-  isFiniteNumber(value.BOARD) &&
-  isFiniteNumber(value.FACE);
+  isFiniteNumber(value.cash) &&
+  isFiniteNumber(value.morale) &&
+  isFiniteNumber(value.board) &&
+  isFiniteNumber(value.face);
 
 const isQuarterLike = (value: unknown): value is Record<string, unknown> =>
   isRecord(value) &&

@@ -39,8 +39,14 @@ const createPortraitMeta = (id: PortraitId): PortraitMeta => ({
   expressions: EXPRESSIONS,
 });
 
+const CEO_MALE_01_SRC = "/sprites/portraits/ceo_male_01/neutral.png";
+
 export const PORTRAIT_CATALOG: Record<PortraitId, PortraitMeta> = {
-  ceo_male_01: createPortraitMeta("ceo_male_01"),
+  ceo_male_01: {
+    id: "ceo_male_01",
+    baseSrc: CEO_MALE_01_SRC,
+    expressions: EXPRESSIONS,
+  },
   ceo_male_02: createPortraitMeta("ceo_male_02"),
   ceo_female_01: createPortraitMeta("ceo_female_01"),
   employee_zhang_chi: createPortraitMeta("employee_zhang_chi"),
@@ -51,5 +57,9 @@ export const PORTRAIT_CATALOG: Record<PortraitId, PortraitMeta> = {
 };
 
 export const getPortraitSrc = (id: PortraitId, expression: PortraitExpression): string => {
+  if (id === "ceo_male_01") {
+    return CEO_MALE_01_SRC;
+  }
+
   return `/sprites/portraits/${id}/${expression}.png`;
 };

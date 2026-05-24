@@ -4,7 +4,7 @@ import { ArrowDown } from "pixelarticons/react/ArrowDown";
 import { PixelCard, PixelIcon, type IconName } from "@/components/pixel";
 
 export interface Props {
-  metricKey: "CASH" | "MORALE" | "BOARD" | "FACE";
+  metricKey: "cash" | "morale" | "board" | "face";
   label: string;
   iconName: IconName;
   before: number;
@@ -29,7 +29,7 @@ const CHIP_CLASS: Record<Props["statusColor"], string> = {
 
 const formatValue = (metricKey: Props["metricKey"], value: number): string => {
   const formatted = Math.trunc(value).toLocaleString("zh-CN");
-  return metricKey === "CASH" ? `¥${formatted}` : formatted;
+  return metricKey === "cash" ? `¥${formatted}` : formatted;
 };
 
 const formatDelta = (metricKey: Props["metricKey"], delta: number): string => {

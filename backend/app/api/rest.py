@@ -70,6 +70,8 @@ async def _snapshot_from_session(
         quarter=session.quarter,
         history=session.history,
         meta_progress=await meta_repo.get(session.player_id),
+        promise_log=session.promise_log,
+        status=session.status,
     )
 
 

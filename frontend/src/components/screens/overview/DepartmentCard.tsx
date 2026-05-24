@@ -27,10 +27,10 @@ export const DepartmentCard = ({ name, status, comment, suggestion, iconName }: 
   const statusMeta = STATUS_META[status];
 
   return (
-    <PixelCard className="h-full min-h-[112px]">
+    <PixelCard className="h-full min-h-[156px]">
       <div className="flex h-full min-h-0 flex-col">
         <div className="flex items-start gap-2">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center border-2 border-stroke-ink bg-panel-dim">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center border-2 border-stroke-ink bg-panel-dim">
             <PixelIcon name={iconName} size={24} ariaLabel={name} />
           </div>
 

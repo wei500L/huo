@@ -14,7 +14,7 @@ export const AppShell = ({ children }: Props) => {
   const mainBarVisible = useScreenStore((state) => state.mainBarVisible);
 
   return (
-    <div className="flex min-h-screen flex-col bg-canvas text-ink-1 font-pixel">
+    <div className="flex min-h-dvh flex-col bg-canvas font-pixel text-ink-1">
       {hudVisible && <HUDBar />}
       <main className="relative flex-1 overflow-hidden">{children}</main>
       {mainBarVisible && <MainActionBar />}

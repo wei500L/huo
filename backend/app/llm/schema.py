@@ -28,7 +28,7 @@ ScoreKey = Literal[
     "logicClarity",
     "confidence",
     "riskAvoidance",
-    "memorableQuote",
+    "quotability",
     "weaknessExposed",
     "authenticity",
 ]
@@ -42,7 +42,7 @@ SCORE_KEYS: tuple[str, ...] = (
     "logicClarity",
     "confidence",
     "riskAvoidance",
-    "memorableQuote",
+    "quotability",
     "weaknessExposed",
     "authenticity",
 )

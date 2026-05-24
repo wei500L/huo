@@ -16,6 +16,7 @@ from app.domain import (
     ManagementStyle,
     MetaProgress,
     PressBundle,
+    Promise,
     Quarter,
     Settlement,
     Stats,
@@ -46,6 +47,7 @@ from ._outbound_state import (
     LastEmployeeDTO,
     LegacyUnlockDTO,
     MetaSummaryDTO,
+    PromiseDTO,
     QuarterDTO,
 )
 
@@ -73,6 +75,7 @@ __all__ = (
     "PressBundleDTO",
     "PressEvaluationDTO",
     "PressInputDTO",
+    "PromiseDTO",
     "QuarterDTO",
     "RivalActionDTO",
     "SettlementBundle",
@@ -91,6 +94,8 @@ class GameSnapshot(OutboundBase):
     quarter: QuarterDTO
     history: list[HistoryEntryDTO] = Field(default_factory=list)
     meta_summary: MetaSummaryDTO
+    promise_log: list[PromiseDTO] = Field(default_factory=list)
+    status: Literal["active", "dead", "won"] = "active"
 
     @classmethod
     def from_domain(
@@ -103,6 +108,8 @@ class GameSnapshot(OutboundBase):
         quarter: Quarter,
         history: list[HistoryEntry],
         meta_progress: MetaProgress,
+        promise_log: list[Promise] | None = None,
+        status: Literal["active", "dead", "won"] = "active",
     ) -> GameSnapshot:
         return cls(
             session_id=session_id,
@@ -112,6 +119,8 @@ class GameSnapshot(OutboundBase):
             quarter=QuarterDTO.from_domain(quarter),
             history=[HistoryEntryDTO.from_domain(entry) for entry in history],
             meta_summary=MetaSummaryDTO.from_domain(meta_progress),
+            promise_log=[PromiseDTO.from_domain(p) for p in (promise_log or [])],
+            status=status,
         )
 
 
@@ -180,6 +189,7 @@ class SettlementBundle(OutboundBase):
     new_stats: StatsDTO
     history_added: HistoryEntryDTO
     death: DeathReasonDTO | None = None
+    llm_degraded: bool = False
 
     @classmethod
     def from_domain(
@@ -192,6 +202,7 @@ class SettlementBundle(OutboundBase):
         new_stats: Stats,
         history_added: HistoryEntry,
         death: DeathReason | None,
+        llm_degraded: bool = False,
     ) -> SettlementBundle:
         return cls(
             session_id=session_id,
@@ -203,6 +214,7 @@ class SettlementBundle(OutboundBase):
             new_stats=StatsDTO.from_domain(new_stats),
             history_added=HistoryEntryDTO.from_domain(history_added),
             death=DeathReasonDTO.from_domain(death) if death is not None else None,
+            llm_degraded=llm_degraded,
         )
 
 

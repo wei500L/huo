@@ -24,10 +24,10 @@ const SESSION_ID = "mock-session-001";
 const PLAYER_ID = "mock-player";
 
 export const mockInitialStats: StatsDTO = {
-  CASH: 70,
-  MORALE: 55,
-  BOARD: 50,
-  FACE: 40,
+  cash: 70,
+  morale: 55,
+  board: 50,
+  face: 40,
 };
 
 const buildQuarterCards = (quarter: 1 | 2 | 3 | 4) => {

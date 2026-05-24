@@ -26,7 +26,7 @@ export const RiskPanel = ({ risks, onViewAll }: RiskPanelProps) => {
 
         <PixelButton
           fullWidth
-          size="md"
+          size="lg"
           variant="danger"
           icon={<PixelIcon name="forward" size={24} ariaLabel="查看全部风险" />}
           onClick={onViewAll}

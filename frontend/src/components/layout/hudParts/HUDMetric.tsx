@@ -11,6 +11,7 @@ export interface HUDMetricProps {
   unit?: string;
   variant: "blue" | "green" | "orange" | "red" | "purple" | "gold";
   dimmed?: boolean;
+  className?: string;
 }
 
 const VARIANT_BADGE: Record<HUDMetricProps["variant"], string> = {
@@ -98,7 +99,17 @@ const isCrisisMetric = (label: string, value: string): boolean => {
   return numericValue !== null && numericValue <= 5;
 };
 
-export const HUDMetric = ({ icon, label, value, delta, status, unit, variant, dimmed = false }: HUDMetricProps) => {
+export const HUDMetric = ({
+  icon,
+  label,
+  value,
+  delta,
+  status,
+  unit,
+  variant,
+  dimmed = false,
+  className,
+}: HUDMetricProps) => {
   const resolvedStatus = status ?? resolveStatus(label, value);
   const crisis = isCrisisMetric(label, value);
   const deltaClass = resolveDeltaClass(delta);
@@ -108,9 +119,10 @@ export const HUDMetric = ({ icon, label, value, delta, status, unit, variant, di
       data-dimmed={dimmed ? "true" : "false"}
       data-variant={variant}
       className={clsx(
-        "flex h-14 min-w-[96px] max-w-[132px] flex-1 overflow-hidden border-2 border-stroke-ink shadow-hard",
+        "flex h-12 min-w-[96px] max-w-[132px] flex-1 overflow-hidden border-2 border-stroke-ink shadow-hard sm:h-14",
         dimmed ? "bg-panel-dim opacity-50" : "bg-panel",
         crisis && "animate-pulse bg-alarm-red text-white",
+        className,
       )}
     >
       <div className="flex h-full min-w-0 flex-1 flex-col justify-between px-2 py-1">
@@ -125,14 +137,14 @@ export const HUDMetric = ({ icon, label, value, delta, status, unit, variant, di
             <PixelIcon name={icon} size={16} />
           </span>
 
-          <span className={clsx("min-w-0 truncate text-[10px] leading-none", crisis ? "text-white" : "text-ink-1")}>
+          <span className={clsx("min-w-0 truncate text-[10px] leading-none sm:text-[10px]", crisis ? "text-white" : "text-ink-1")}>
             {label}
           </span>
 
           {resolvedStatus ? (
             <span
               className={clsx(
-                "ml-auto shrink-0 border border-stroke-ink px-1 text-[10px] leading-none",
+                "ml-auto hidden shrink-0 border border-stroke-ink px-1 text-[10px] leading-none lg:inline-flex",
                 crisis ? "bg-white text-alarm-red" : "bg-panel-dim text-ink-1",
               )}
             >
@@ -144,14 +156,14 @@ export const HUDMetric = ({ icon, label, value, delta, status, unit, variant, di
         <div className="flex min-w-0 items-end gap-1">
           <span
             className={clsx(
-              "min-w-0 truncate font-retro text-[13px] leading-none",
+              "min-w-0 truncate font-retro text-[12px] leading-none sm:text-[13px]",
               crisis ? "text-white" : VARIANT_VALUE[variant],
             )}
           >
             {value}
           </span>
           {unit ? (
-            <span className={clsx("shrink-0 text-[10px] leading-none", crisis ? "text-white" : "text-ink-2")}>
+            <span className={clsx("hidden shrink-0 text-[10px] leading-none lg:inline", crisis ? "text-white" : "text-ink-2")}>
               {unit}
             </span>
           ) : null}
@@ -159,7 +171,7 @@ export const HUDMetric = ({ icon, label, value, delta, status, unit, variant, di
 
         <div className="flex min-w-0 items-center justify-between gap-1">
           {delta ? (
-            <span className={clsx("truncate text-[10px] leading-none", crisis ? "text-white" : deltaClass)}>
+            <span className={clsx("hidden truncate text-[10px] leading-none lg:inline", crisis ? "text-white" : deltaClass)}>
               {delta}
             </span>
           ) : (

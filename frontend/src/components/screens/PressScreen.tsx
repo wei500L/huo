@@ -116,18 +116,18 @@ export function PressScreen() {
           </div>
         </main>
 
-        <footer className="mt-auto flex flex-wrap items-center justify-center gap-px-sm pt-px-md">
-          <div className="w-full max-w-[240px]">
+        <footer className="mt-auto grid gap-px-sm pt-px-md md:grid-cols-3">
+          <div className="w-full">
             <PixelButton variant="blue" size="lg" fullWidth disabled={!canSubmit || inflight.submitPress} onClick={submitPress}>
               发言完毕
             </PixelButton>
           </div>
-          <div className="w-full max-w-[260px]">
+          <div className="w-full">
             <PixelButton variant="red" size="lg" fullWidth onClick={openSkipDialog}>
               跳过 (扣 FACE -10)
             </PixelButton>
           </div>
-          <div className="w-full max-w-[220px]">
+          <div className="w-full">
             <PixelButton variant="ghost" size="lg" fullWidth disabled>
               改用文字模式
             </PixelButton>

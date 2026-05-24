@@ -25,7 +25,7 @@ PressScoreKey = Literal[
     "logicClarity",
     "confidence",
     "riskAvoidance",
-    "memorableQuote",
+    "quotability",
     "weaknessExposed",
     "authenticity",
 ]
@@ -102,7 +102,7 @@ class PressEvaluation(BaseModel):
             "logicClarity",
             "confidence",
             "riskAvoidance",
-            "memorableQuote",
+            "quotability",
             "weaknessExposed",
             "authenticity",
         }

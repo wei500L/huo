@@ -68,7 +68,7 @@ def build_press_evaluation(seed: int | None = None, **overrides: object) -> Pres
             "logicClarity": 61,
             "confidence": 55,
             "riskAvoidance": 49,
-            "memorableQuote": 77,
+            "quotability": 77,
             "weaknessExposed": 58,
             "authenticity": 63,
         },

@@ -10,7 +10,7 @@ import type { IconName } from "./iconCatalog";
 import { PixelSparkline } from "./PixelSparkline";
 
 export interface PixelMetricCardProps {
-  metricKey: "CASH" | "MORALE" | "BOARD" | "FACE" | "SALES" | "MKT";
+  metricKey: "cash" | "morale" | "board" | "face" | "SALES" | "MKT";
   label: string;
   iconName: IconName;
   value: number;
@@ -46,15 +46,15 @@ const STATUS_CLASS = (text: string): string => {
 };
 
 const SIZE_CLASS: Record<NonNullable<PixelMetricCardProps["size"]>, string> = {
-  compact: "min-h-[126px] px-2 py-2",
-  default: "min-h-[152px] px-3 py-3",
-  hero: "min-h-[176px] px-4 py-4",
+  compact: "min-h-[126px] px-2 py-2 sm:min-h-[132px] sm:px-3 sm:py-3",
+  default: "min-h-[152px] px-3 py-3 sm:min-h-[164px] sm:px-4 sm:py-4",
+  hero: "min-h-[176px] px-4 py-4 sm:min-h-[192px] sm:px-5 sm:py-5",
 };
 
 const VALUE_CLASS: Record<NonNullable<PixelMetricCardProps["size"]>, string> = {
-  compact: "text-px-lg",
-  default: "text-px-xl",
-  hero: "text-px-xxl",
+  compact: "text-px-lg sm:text-px-xl",
+  default: "text-px-xl sm:text-px-xxl",
+  hero: "text-px-xxl sm:text-px-hero",
 };
 
 const ICON_SIZE: Record<NonNullable<PixelMetricCardProps["size"]>, 24 | 32 | 48> = {
@@ -64,9 +64,9 @@ const ICON_SIZE: Record<NonNullable<PixelMetricCardProps["size"]>, 24 | 32 | 48>
 };
 
 const ICON_BOX_CLASS: Record<NonNullable<PixelMetricCardProps["size"]>, string> = {
-  compact: "h-8 w-8",
-  default: "h-10 w-10",
-  hero: "h-12 w-12",
+  compact: "h-8 w-8 sm:h-9 sm:w-9",
+  default: "h-10 w-10 sm:h-12 sm:w-12",
+  hero: "h-12 w-12 sm:h-14 sm:w-14",
 };
 
 const SPARK_SIZE: Record<NonNullable<PixelMetricCardProps["size"]>, { width: number; height: number }> = {

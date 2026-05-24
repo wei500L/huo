@@ -51,6 +51,10 @@ FIELD_ALIASES = {
     "last_employee": "lastEmployee",
     "legacy_unlocks": "legacyUnlocks",
 }
+SCORE_ALIASES = {
+    "memorableQuote": "quotability",
+    "memorable_quote": "quotability",
+}
 DIRECTOR_LIMITS: Mapping[tuple[str, ...], int] = {
     ("boardReaction", "speech"): 80,
     ("employeeGossip", "speaker"): 12,
@@ -279,9 +283,13 @@ def min_length_or_fallback(
 
 
 def normalize_scores(value: dict[Any, Any]) -> dict[str, int]:
+    aliased: dict[str, Any] = {}
+    for k, v in value.items():
+        canonical = SCORE_ALIASES.get(k, k)
+        aliased.setdefault(canonical, v)
     scores: dict[str, int] = {}
     for key in SCORE_KEYS:
-        raw_score = value.get(key, 50)
+        raw_score = aliased.get(key, 50)
         score = raw_score if isinstance(raw_score, int) and not isinstance(raw_score, bool) else 50
         scores[key] = min(100, max(0, score))
     return scores

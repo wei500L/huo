@@ -1,5 +1,3 @@
-import { useEffect, useState } from "react";
-
 import { PixelIcon } from "@/components/pixel";
 import { useGameStore } from "@/store/gameStore";
 import {
@@ -18,22 +16,6 @@ const MOCK_TIME = "09:15";
 const MOCK_DATE = "2025/05/26";
 const MOCK_WEEKDAY = "周一";
 
-const useViewportWidth = () => {
-  const [width, setWidth] = useState(() => (typeof window === "undefined" ? 1280 : window.innerWidth));
-
-  useEffect(() => {
-    const updateWidth = () => {
-      setWidth(window.innerWidth);
-    };
-
-    updateWidth();
-    window.addEventListener("resize", updateWidth);
-    return () => window.removeEventListener("resize", updateWidth);
-  }, []);
-
-  return width;
-};
-
 const formatDelta = (current?: number, previous?: number): string | undefined => {
   if (!Number.isFinite(current ?? NaN) || !Number.isFinite(previous ?? NaN)) {
     return undefined;
@@ -48,29 +30,29 @@ const formatDelta = (current?: number, previous?: number): string | undefined =>
   return `${sign}${Math.abs(delta).toLocaleString("en-US")}`;
 };
 
-const formatMetricValue = (key: "CASH" | "MORALE" | "BOARD" | "FACE", value?: number): string => {
+const formatMetricValue = (key: "cash" | "morale" | "board" | "face", value?: number): string => {
   if (!Number.isFinite(value ?? NaN)) {
     return "-/-";
   }
 
   const formatted = Math.trunc(value as number).toLocaleString("en-US");
-  return key === "CASH" ? `¥${formatted}` : formatted;
+  return key === "cash" ? `¥${formatted}` : formatted;
 };
 
-const formatStatStatus = (key: "CASH" | "MORALE" | "BOARD" | "FACE", value?: number): string | undefined => {
+const formatStatStatus = (key: "cash" | "morale" | "board" | "face", value?: number): string | undefined => {
   if (!Number.isFinite(value ?? NaN)) {
     return undefined;
   }
 
   const resolved = value as number;
   switch (key) {
-    case "CASH":
+    case "cash":
       return resolved <= 5 ? "中立" : resolved >= 60 ? "健康" : "稳定";
-    case "MORALE":
+    case "morale":
       return resolved >= 60 ? "健康" : resolved >= 35 ? "稳定" : "中立";
-    case "BOARD":
+    case "board":
       return resolved >= 55 ? "健康" : resolved >= 35 ? "稳定" : "中立";
-    case "FACE":
+    case "face":
       return resolved >= 45 ? "健康" : resolved >= 25 ? "稳定" : "中立";
     default:
       return undefined;
@@ -78,16 +60,12 @@ const formatStatStatus = (key: "CASH" | "MORALE" | "BOARD" | "FACE", value?: num
 };
 
 export const HUDBar = () => {
-  const viewportWidth = useViewportWidth();
   const snapshot = useGameStore(selectCurrentSnapshot);
   const stats = useGameStore(selectCurrentStats);
   const quarter = useGameStore(selectCurrentQuarter);
   const company = useGameStore(selectCurrentCompany);
   const history = useGameStore(selectHistory);
   const push = useScreenStore((state) => state.push);
-
-  const showLegacyMetrics = viewportWidth >= 1280;
-  const showStatus = viewportWidth >= 1024;
   const latestHistory = history[history.length - 1] ?? null;
   const employeeCount = typeof company?.employeeCount === "number" ? company.employeeCount : null;
   const previousStats = latestHistory?.statsBefore ?? null;
@@ -99,58 +77,56 @@ export const HUDBar = () => {
     {
       icon: "money" as const,
       label: "现金流",
-      value: formatMetricValue("CASH", stats?.CASH),
-      delta: formatDelta(stats?.CASH, previousStats?.CASH),
-      status: showStatus ? formatStatStatus("CASH", stats?.CASH) : undefined,
+      value: formatMetricValue("cash", stats?.cash),
+      delta: formatDelta(stats?.cash, previousStats?.cash),
+      status: formatStatStatus("cash", stats?.cash),
       variant: "gold" as const,
     },
     {
       icon: "morale" as const,
       label: "士气",
-      value: formatMetricValue("MORALE", stats?.MORALE),
-      delta: formatDelta(stats?.MORALE, previousStats?.MORALE),
-      status: showStatus ? formatStatStatus("MORALE", stats?.MORALE) : undefined,
+      value: formatMetricValue("morale", stats?.morale),
+      delta: formatDelta(stats?.morale, previousStats?.morale),
+      status: formatStatStatus("morale", stats?.morale),
       variant: "green" as const,
     },
     {
       icon: "board" as const,
       label: "董事会",
-      value: formatMetricValue("BOARD", stats?.BOARD),
-      delta: formatDelta(stats?.BOARD, previousStats?.BOARD),
-      status: showStatus ? formatStatStatus("BOARD", stats?.BOARD) : undefined,
+      value: formatMetricValue("board", stats?.board),
+      delta: formatDelta(stats?.board, previousStats?.board),
+      status: formatStatStatus("board", stats?.board),
       variant: "blue" as const,
     },
     {
       icon: "face" as const,
       label: "面子",
-      value: formatMetricValue("FACE", stats?.FACE),
-      delta: formatDelta(stats?.FACE, previousStats?.FACE),
-      status: showStatus ? formatStatStatus("FACE", stats?.FACE) : undefined,
+      value: formatMetricValue("face", stats?.face),
+      delta: formatDelta(stats?.face, previousStats?.face),
+      status: formatStatStatus("face", stats?.face),
       variant: "purple" as const,
     },
   ];
 
-  const legacyMetrics = showLegacyMetrics
-    ? [
-        {
-          icon: "trending-up" as const,
-          label: "SALES",
-          value: "v2",
-          variant: "orange" as const,
-          dimmed: true,
-        },
-        {
-          icon: "trending-up" as const,
-          label: "MKT",
-          value: "v2",
-          variant: "red" as const,
-          dimmed: true,
-        },
-      ]
-    : [];
+  const legacyMetrics = [
+    {
+      icon: "trending-up" as const,
+      label: "SALES",
+      value: "v2",
+      variant: "orange" as const,
+      dimmed: true,
+    },
+    {
+      icon: "trending-up" as const,
+      label: "MKT",
+      value: "v2",
+      variant: "red" as const,
+      dimmed: true,
+    },
+  ];
 
   return (
-    <header className="flex h-16 items-center gap-2 overflow-x-hidden overflow-y-visible border-b-2 border-stroke-ink bg-panel px-2">
+    <header className="flex flex-col gap-3 overflow-x-hidden overflow-y-visible border-b-2 border-stroke-ink bg-panel px-3 py-3 sm:px-4 lg:h-20 lg:flex-row lg:items-center lg:py-0">
       <span className="sr-only">HUD</span>
 
       <LogoBadge />
@@ -162,36 +138,38 @@ export const HUDBar = () => {
         date={hasSnapshot ? MOCK_DATE : "--/--/--"}
       />
 
-      <div className="flex min-w-0 flex-1 items-center gap-1 overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-wrap items-stretch gap-2 overflow-hidden">
         {coreMetrics.map((metric) => (
-          <HUDMetric
-            key={metric.label}
-            icon={metric.icon}
-            label={metric.label}
-            value={metric.value}
-            delta={metric.delta}
-            status={metric.status}
-            variant={metric.variant}
-          />
+          <div key={metric.label} className="min-w-0 flex-1">
+            <HUDMetric
+              icon={metric.icon}
+              label={metric.label}
+              value={metric.value}
+              delta={metric.delta}
+              status={metric.status}
+              variant={metric.variant}
+            />
+          </div>
         ))}
 
         {legacyMetrics.map((metric) => (
-          <HUDMetric
-            key={metric.label}
-            icon={metric.icon}
-            label={metric.label}
-            value={metric.value}
-            variant={metric.variant}
-            dimmed={metric.dimmed}
-          />
+          <div key={metric.label} className="hidden min-w-0 flex-1 xl:flex">
+            <HUDMetric
+              icon={metric.icon}
+              label={metric.label}
+              value={metric.value}
+              variant={metric.variant}
+              dimmed={metric.dimmed}
+            />
+          </div>
         ))}
       </div>
 
-      <div className="flex shrink-0 items-center gap-2">
+      <div className="flex shrink-0 items-center justify-end gap-2">
         {employeeCount !== null ? (
-          <div className="flex h-12 items-center gap-1 border-2 border-stroke-ink bg-panel-dim px-2 shadow-hard-sm">
+          <div className="flex h-12 items-center gap-2 border-2 border-stroke-ink bg-panel-dim px-3 shadow-hard-sm sm:h-14">
             <PixelIcon name="users" size={16} />
-            <span className="whitespace-nowrap text-px-sm leading-none text-ink-1">
+            <span className="whitespace-nowrap text-[10px] leading-none text-ink-1 sm:text-px-sm">
               {employeeCount}/{MAX_EMPLOYEES}
             </span>
           </div>
@@ -199,9 +177,9 @@ export const HUDBar = () => {
 
         <button
           type="button"
-          aria-label="Open stats dashboard"
+          aria-label="设置"
           title="设置"
-          className="flex h-12 w-12 items-center justify-center border-2 border-stroke-ink bg-panel shadow-hard-sm"
+          className="flex h-12 w-12 items-center justify-center border-2 border-stroke-ink bg-panel shadow-hard-sm sm:h-14 sm:w-14"
           onClick={() => push("stats-dashboard")}
         >
           <PixelIcon name="settings" size={16} />

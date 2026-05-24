@@ -20,10 +20,10 @@ const CATEGORY_STYLE: Record<string, { color: Variant; icon: IconName; label: st
 };
 
 const METRICS: Array<{ key: MetricKey; icon: IconName; label: string }> = [
-  { key: "CASH", icon: "money", label: "现金流" },
-  { key: "MORALE", icon: "morale", label: "士气" },
-  { key: "BOARD", icon: "board", label: "董事会信任" },
-  { key: "FACE", icon: "face", label: "公司体面" },
+  { key: "cash", icon: "money", label: "现金流" },
+  { key: "morale", icon: "morale", label: "士气" },
+  { key: "board", icon: "board", label: "董事会信任" },
+  { key: "face", icon: "face", label: "公司体面" },
 ];
 
 const isEditableTarget = (target: EventTarget | null): boolean => {
@@ -37,7 +37,7 @@ const getCardStyle = (card: DecisionCardDTO) =>
 
 const formatDelta = (key: MetricKey, value = 0): string => {
   const sign = value > 0 ? "+" : "";
-  if (key === "CASH") {
+  if (key === "cash") {
     return `${sign}${value >= 0 ? "¥" : "-¥"}${Math.abs(value).toLocaleString("zh-CN")}`;
   }
 

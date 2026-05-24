@@ -21,7 +21,7 @@ const MOCK_DECISION_CARDS: DecisionCardDTO[] = [
     category: "finance",
     title: "融资续命",
     description: "引入新一轮投资，缓解现金流压力。",
-    immediateEffect: { CASH: 40000, MORALE: -10, BOARD: -10, FACE: -10 },
+    immediateEffect: { cash: 40000, morale: -10, board: -10, face: -10 },
     flavor: "把未来的一部分，提前卖给愿意买单的人。",
   },
   {
@@ -29,7 +29,7 @@ const MOCK_DECISION_CARDS: DecisionCardDTO[] = [
     category: "people",
     title: "小幅裁员",
     description: "优化人员结构，提升短期效率。",
-    immediateEffect: { CASH: 15000, MORALE: -20, BOARD: -5, FACE: -5 },
+    immediateEffect: { cash: 15000, morale: -20, board: -5, face: -5 },
     flavor: "成本表会好看一点，但办公室会更安静。",
   },
   {
@@ -37,7 +37,7 @@ const MOCK_DECISION_CARDS: DecisionCardDTO[] = [
     category: "pr",
     title: "隐瞒坏消息",
     description: "对外保持乐观，延后披露负面情况。",
-    immediateEffect: { CASH: 5000, MORALE: -5, BOARD: -15, FACE: -20 },
+    immediateEffect: { cash: 5000, morale: -5, board: -15, face: -20 },
     flavor: "先把话说圆，再看能不能把账也圆过去。",
   },
 ];
@@ -171,7 +171,7 @@ export function DecisionScreen() {
               position="inline"
               size="sm"
             />
-            <div className="absolute left-[88px] top-4 w-[320px] max-w-[calc(100vw-112px)]">
+            <div className="absolute left-[88px] top-4 w-[240px] max-w-[calc(100vw-112px)] sm:w-[320px]">
               <PixelSpeechBubble arrow="down" text="Q1 开局不利，是时候做出艰难决定了..." tone="neutral" />
             </div>
           </div>
@@ -191,8 +191,8 @@ export function DecisionScreen() {
           </div>
         </header>
 
-        <main className="grid min-h-0 grid-cols-1 gap-px-lg lg:grid-cols-12">
-          <section className="relative min-h-0 lg:col-span-9">
+        <main className="grid min-h-0 grid-cols-1 gap-px-lg xl:grid-cols-[minmax(0,1fr)_320px]">
+          <section className="relative min-h-0">
             <div className="mb-px-md border-2 border-stroke-ink bg-pixel-blue px-px-md py-px-sm text-white">
               <h1 className="font-retro text-px-lg leading-none">Q1 季度决策</h1>
               <p className="mt-px-xs text-px-sm leading-normal">
@@ -200,12 +200,7 @@ export function DecisionScreen() {
               </p>
             </div>
 
-            <div className="relative">
-              <div className="absolute right-0 top-0 z-20 -translate-y-2 translate-x-2">
-                <EffectPreview card={selectedCard} />
-              </div>
-              <DecisionCardGroup cards={cards} selectedId={selectedId} onSelect={handleSelect} />
-            </div>
+            <DecisionCardGroup cards={cards} selectedId={selectedId} onSelect={handleSelect} />
 
             <div className="mt-px-lg flex items-center justify-center">
               <button
@@ -224,7 +219,8 @@ export function DecisionScreen() {
             </div>
           </section>
 
-          <aside className="lg:col-span-3">
+          <aside className="flex min-w-0 flex-col gap-px-md">
+            <EffectPreview card={selectedCard} />
             <PromiseLedger promises={promiseLog} />
           </aside>
         </main>

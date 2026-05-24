@@ -26,7 +26,7 @@ export const PRESS_BUNDLE_V1: PressBundleDTO = {
     memorableQuote: "我们不会用愿景替代现金表。",
     biggestFlaw: "回答仍然偏保守，没把增长逻辑讲透。",
     mediaAngle: "市场会把这场发布会读成一次止损宣言。",
-    statImpact: { FACE: 8, BOARD: 4, CASH: -1, MORALE: -3 },
+    statImpact: { face: 8, board: 4, cash: -1, morale: -3 },
   },
   headlines: [
     { outlet: "财新小报", headline: "空降 CEO 承认公司进入艰难窗口", tone: "neutral" },

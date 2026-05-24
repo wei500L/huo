@@ -16,7 +16,8 @@ const normalizeScenarioName = (value: unknown): MockScenarioName => {
 };
 
 export const resolveMockScenarioName = (): MockScenarioName => {
-  const globalScenario = (globalThis as Window & { __YES_BOSS_MOCK_SCENARIO__?: unknown }).__YES_BOSS_MOCK_SCENARIO__;
+  const globalScope = globalThis as typeof globalThis & { __YES_BOSS_MOCK_SCENARIO__?: unknown };
+  const globalScenario = globalScope.__YES_BOSS_MOCK_SCENARIO__;
   if (typeof globalScenario === "string") {
     return normalizeScenarioName(globalScenario);
   }
