@@ -6,7 +6,7 @@
 
 # Test info
 
-- Name: responsive-layout.spec.ts >> responsive layout >> decision and press remain usable at 375x900
+- Name: responsive-layout.spec.ts >> responsive layout >> decision and press remain usable at 1920x1080
 - Location: tests/e2e/responsive-layout.spec.ts:42:9
 
 # Error details
@@ -44,61 +44,85 @@ Call log:
             - img [ref=e27]:
               - img [ref=e28]
             - generic [ref=e30]: 现金流
-          - generic [ref=e32]: ¥70
-          - generic [ref=e34]: "-"
-      - article [ref=e36]:
-        - generic [ref=e37]:
-          - generic [ref=e38]:
-            - img [ref=e40]:
-              - img [ref=e41]
-            - generic [ref=e43]: 士气
-          - generic [ref=e45]: "55"
-          - generic [ref=e47]: "-"
-      - article [ref=e49]:
-        - generic [ref=e50]:
-          - generic [ref=e51]:
-            - img [ref=e53]:
-              - img [ref=e54]
-            - generic [ref=e56]: 董事会
-          - generic [ref=e58]: "50"
-          - generic [ref=e60]: "-"
-      - article [ref=e62]:
-        - generic [ref=e63]:
-          - generic [ref=e64]:
-            - img [ref=e66]:
-              - img [ref=e67]
-            - generic [ref=e69]: 面子
-          - generic [ref=e71]: "40"
-          - generic [ref=e73]: "-"
-    - button "设置" [ref=e75] [cursor=pointer]:
-      - img "settings" [ref=e76]:
-        - img [ref=e77]
-  - main [ref=e80]:
-    - generic [ref=e81]:
-      - generic [ref=e82]: "[Screen: office]"
-      - button "跳下一屏" [ref=e83] [cursor=pointer]
-  - contentinfo [ref=e84]:
-    - generic [ref=e85]: MAIN BAR
-    - generic [ref=e87]:
-      - img [ref=e91]
-      - paragraph [ref=e95]: "TODO: 先听风向，再定动作。"
-    - generic [ref=e96]:
-      - button "公司管理" [ref=e97] [cursor=pointer]:
-        - img [ref=e99]:
-          - img [ref=e100]
-        - generic [ref=e102]: 公司管理
-      - button "员工沟通" [ref=e103] [cursor=pointer]:
-        - img [ref=e105]:
-          - img [ref=e106]
-        - generic [ref=e108]: 员工沟通
-      - button "项目推进" [ref=e109] [cursor=pointer]:
-        - img [ref=e111]:
-          - img [ref=e112]
-        - generic [ref=e114]: 项目推进
-      - button "财务决策" [ref=e115] [cursor=pointer]:
-        - img [ref=e117]:
-          - img [ref=e118]
-        - generic [ref=e120]: 财务决策
+            - generic [ref=e31]: 健康
+          - generic [ref=e33]: ¥70
+          - generic [ref=e35]: "-"
+      - article [ref=e37]:
+        - generic [ref=e38]:
+          - generic [ref=e39]:
+            - img [ref=e41]:
+              - img [ref=e42]
+            - generic [ref=e44]: 士气
+            - generic [ref=e45]: 稳定
+          - generic [ref=e47]: "55"
+          - generic [ref=e49]: "-"
+      - article [ref=e51]:
+        - generic [ref=e52]:
+          - generic [ref=e53]:
+            - img [ref=e55]:
+              - img [ref=e56]
+            - generic [ref=e58]: 董事会
+            - generic [ref=e59]: 稳定
+          - generic [ref=e61]: "50"
+          - generic [ref=e63]: "-"
+      - article [ref=e65]:
+        - generic [ref=e66]:
+          - generic [ref=e67]:
+            - img [ref=e69]:
+              - img [ref=e70]
+            - generic [ref=e72]: 面子
+            - generic [ref=e73]: 稳定
+          - generic [ref=e75]: "40"
+          - generic [ref=e77]: "-"
+      - article [ref=e79]:
+        - generic [ref=e80]:
+          - generic [ref=e81]:
+            - img [ref=e83]:
+              - img [ref=e84]
+            - generic [ref=e86]: SALES
+          - generic [ref=e88]: v2
+          - generic [ref=e90]: "-"
+      - article [ref=e92]:
+        - generic [ref=e93]:
+          - generic [ref=e94]:
+            - img [ref=e96]:
+              - img [ref=e97]
+            - generic [ref=e99]: MKT
+          - generic [ref=e101]: v2
+          - generic [ref=e103]: "-"
+    - button "设置" [ref=e105] [cursor=pointer]:
+      - img "settings" [ref=e106]:
+        - img [ref=e107]
+  - main [ref=e110]:
+    - generic [ref=e111]:
+      - generic [ref=e112]: "[Screen: office]"
+      - button "跳下一屏" [ref=e113] [cursor=pointer]
+  - contentinfo [ref=e114]:
+    - generic [ref=e115]: MAIN BAR
+    - generic [ref=e117]:
+      - img [ref=e121]
+      - paragraph [ref=e125]: "TODO: 先听风向，再定动作。"
+    - generic [ref=e126]:
+      - button "公司管理" [ref=e127] [cursor=pointer]:
+        - img [ref=e129]:
+          - img [ref=e130]
+        - generic [ref=e132]: 公司管理
+        - generic [ref=e133]: "1"
+      - button "员工沟通" [ref=e134] [cursor=pointer]:
+        - img [ref=e136]:
+          - img [ref=e137]
+        - generic [ref=e139]: 员工沟通
+        - generic [ref=e140]: "2"
+      - button "项目推进" [ref=e141] [cursor=pointer]:
+        - img [ref=e143]:
+          - img [ref=e144]
+        - generic [ref=e146]: 项目推进
+        - generic [ref=e147]: "3"
+      - button "财务决策" [ref=e148] [cursor=pointer]:
+        - img [ref=e150]:
+          - img [ref=e151]
+        - generic [ref=e153]: 财务决策
+        - generic [ref=e154]: "4"
 ```
 
 # Test source

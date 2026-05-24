@@ -55,6 +55,7 @@ export const MainActionBar = ({ dimmed = false }: MainActionBarProps) => {
         variant: "orange" as const,
         icon: "trending-up" as const,
         label: "项目推进",
+        ariaLabel: "处理董事会关系",
         hotkey: "3" as const,
         badgeCount: badgeCounts.projectProgress,
         onClick: () => {
@@ -126,6 +127,7 @@ export const MainActionBar = ({ dimmed = false }: MainActionBarProps) => {
             key={action.label}
             badgeCount={action.badgeCount}
             disabled={isDisabled}
+            ariaLabel={action.ariaLabel}
             icon={action.icon}
             hotkey={action.hotkey}
             label={action.label}

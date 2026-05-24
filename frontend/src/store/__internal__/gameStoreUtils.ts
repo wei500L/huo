@@ -26,6 +26,8 @@ export interface GossipNote {
   notedAt: string;
 }
 
+export type StoredToast = ToastDTO & { id: string };
+
 export type GameDataState = {
   snapshot: GameSnapshotDTO | null;
   history: HistoryEntryDTO[];
@@ -37,7 +39,7 @@ export type GameDataState = {
   pendingSettlementBundle: SettlementBundleDTO | null;
   pendingDeathBundle: DeathReportBundleDTO | null;
   pressBundle: PressBundleDTO | null;
-  toasts: ToastDTO[];
+  toasts: StoredToast[];
   inflight: {
     createGame?: boolean;
     selectDecision?: boolean;

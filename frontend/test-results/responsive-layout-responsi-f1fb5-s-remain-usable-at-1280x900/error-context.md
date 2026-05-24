@@ -90,44 +90,39 @@ Call log:
             - generic [ref=e99]: MKT
           - generic [ref=e101]: v2
           - generic [ref=e103]: "-"
-    - generic [ref=e104]:
-      - generic [ref=e105]:
-        - img "users" [ref=e106]:
-          - img [ref=e107]
-        - generic [ref=e109]: 112/20
-      - button "Open stats dashboard" [ref=e110] [cursor=pointer]:
-        - img "settings" [ref=e111]:
-          - img [ref=e112]
-  - main [ref=e115]:
-    - generic [ref=e116]:
-      - generic [ref=e117]: "[Screen: office]"
-      - button "跳下一屏" [ref=e118] [cursor=pointer]
-  - contentinfo [ref=e119]:
-    - generic [ref=e120]: MAIN BAR
-    - generic [ref=e122]:
-      - img [ref=e126]
-      - paragraph [ref=e130]: "TODO: 先听风向，再定动作。"
-    - generic [ref=e131]:
-      - button "公司管理" [ref=e132] [cursor=pointer]:
-        - img [ref=e134]:
-          - img [ref=e135]
-        - generic [ref=e137]: 公司管理
-        - generic [ref=e138]: "1"
-      - button "员工沟通" [ref=e139] [cursor=pointer]:
-        - img [ref=e141]:
-          - img [ref=e142]
-        - generic [ref=e144]: 员工沟通
-        - generic [ref=e145]: "2"
-      - button "项目推进" [ref=e146] [cursor=pointer]:
-        - img [ref=e148]:
-          - img [ref=e149]
-        - generic [ref=e151]: 项目推进
-        - generic [ref=e152]: "3"
-      - button "财务决策" [ref=e153] [cursor=pointer]:
-        - img [ref=e155]:
-          - img [ref=e156]
-        - generic [ref=e158]: 财务决策
-        - generic [ref=e159]: "4"
+    - button "设置" [ref=e105] [cursor=pointer]:
+      - img "settings" [ref=e106]:
+        - img [ref=e107]
+  - main [ref=e110]:
+    - generic [ref=e111]:
+      - generic [ref=e112]: "[Screen: office]"
+      - button "跳下一屏" [ref=e113] [cursor=pointer]
+  - contentinfo [ref=e114]:
+    - generic [ref=e115]: MAIN BAR
+    - generic [ref=e117]:
+      - img [ref=e121]
+      - paragraph [ref=e125]: "TODO: 先听风向，再定动作。"
+    - generic [ref=e126]:
+      - button "公司管理" [ref=e127] [cursor=pointer]:
+        - img [ref=e129]:
+          - img [ref=e130]
+        - generic [ref=e132]: 公司管理
+        - generic [ref=e133]: "1"
+      - button "员工沟通" [ref=e134] [cursor=pointer]:
+        - img [ref=e136]:
+          - img [ref=e137]
+        - generic [ref=e139]: 员工沟通
+        - generic [ref=e140]: "2"
+      - button "项目推进" [ref=e141] [cursor=pointer]:
+        - img [ref=e143]:
+          - img [ref=e144]
+        - generic [ref=e146]: 项目推进
+        - generic [ref=e147]: "3"
+      - button "财务决策" [ref=e148] [cursor=pointer]:
+        - img [ref=e150]:
+          - img [ref=e151]
+        - generic [ref=e153]: 财务决策
+        - generic [ref=e154]: "4"
 ```
 
 # Test source

@@ -6,6 +6,7 @@ export interface Props {
   variant: "blue" | "green" | "orange" | "red";
   icon: IconName;
   label: string;
+  ariaLabel?: string;
   hotkey: "1" | "2" | "3" | "4";
   badgeCount?: number;
   disabled?: boolean;
@@ -27,6 +28,7 @@ export const MainActionButton = ({
   variant,
   icon,
   label,
+  ariaLabel,
   hotkey,
   badgeCount = 0,
   disabled = false,
@@ -37,7 +39,7 @@ export const MainActionButton = ({
   return (
     <button
       type="button"
-      aria-label={label}
+      aria-label={ariaLabel ?? label}
       disabled={disabled}
       onClick={disabled ? undefined : onClick}
       className={clsx(
@@ -61,7 +63,7 @@ export const MainActionButton = ({
 
       {hasBadge ? (
         <span
-          aria-label={`${label} ${formatBadgeCount(badgeCount)}`}
+          aria-label={`${ariaLabel ?? label} ${formatBadgeCount(badgeCount)}`}
           className="absolute right-1 top-1 hidden h-[14px] w-[14px] items-center justify-center border border-stroke-ink bg-alarm-red font-retro text-[8px] leading-none text-white lg:flex"
         >
           {formatBadgeCount(badgeCount)}

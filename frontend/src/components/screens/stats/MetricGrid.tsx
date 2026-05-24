@@ -76,7 +76,7 @@ const buildSparkline = (history: HistoryEntryDTO[], key: MetricKey, current: num
 
 const getMetricValue = (config: MetricConfig, stats: MetricGridStats, company?: CompanyDTO | null): number => {
   if (config.key === "SALES") {
-    return stats.SALES ?? company?.employeeCount ?? config.fallbackValue;
+    return stats.SALES ?? config.fallbackValue;
   }
 
   if (config.key === "MKT") {

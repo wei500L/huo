@@ -11,7 +11,6 @@ import { useScreenStore } from "@/store/screenStore";
 
 import { DateCard, HUDMetric, LogoBadge } from "./hudParts";
 
-const MAX_EMPLOYEES = 20;
 const MOCK_TIME = "09:15";
 const MOCK_DATE = "2025/05/26";
 const MOCK_WEEKDAY = "周一";
@@ -67,7 +66,6 @@ export const HUDBar = () => {
   const history = useGameStore(selectHistory);
   const push = useScreenStore((state) => state.push);
   const latestHistory = history[history.length - 1] ?? null;
-  const employeeCount = typeof company?.employeeCount === "number" ? company.employeeCount : null;
   const previousStats = latestHistory?.statsBefore ?? null;
 
   const quarterNumber = quarter?.number ?? 0;
@@ -166,15 +164,6 @@ export const HUDBar = () => {
       </div>
 
       <div className="flex shrink-0 items-center justify-end gap-2">
-        {employeeCount !== null ? (
-          <div className="flex h-12 items-center gap-2 border-2 border-stroke-ink bg-panel-dim px-3 shadow-hard-sm sm:h-14">
-            <PixelIcon name="users" size={16} />
-            <span className="whitespace-nowrap text-[10px] leading-none text-ink-1 sm:text-px-sm">
-              {employeeCount}/{MAX_EMPLOYEES}
-            </span>
-          </div>
-        ) : null}
-
         <button
           type="button"
           aria-label="设置"

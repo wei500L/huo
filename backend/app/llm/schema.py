@@ -136,7 +136,7 @@ class DeathReportRaw(_RawBase):
     obituary: str = Field(min_length=200, max_length=600)
     biggestMistakeDecisionId: str | None
     lastEmployee: dict[str, Any] | None
-    headlines: list[str] = Field(min_length=3, max_length=3)
+    headlines: list[str] = Field(min_length=1, max_length=3)
     legacyUnlocks: list[str]
 
 

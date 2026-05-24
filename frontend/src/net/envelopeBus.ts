@@ -42,7 +42,6 @@ export function dispatch(env: Envelope<unknown>) {
     case "error": {
       const error = env.payload as ErrorOutboundDTO;
       useGameStore.getState().pushToast({
-        id: crypto.randomUUID(),
         level: "error",
         message: error.message,
       });

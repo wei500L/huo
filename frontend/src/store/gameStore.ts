@@ -270,8 +270,8 @@ export const useGameStore = create<GameStoreState>()(
 
         const toast = deepStripForbiddenFields({
           ...t,
-          id: t.id && t.id.length > 0 ? t.id : createToastId(),
-        }) as ToastDTO;
+          id: createToastId(),
+        }) as ToastDTO & { id: string };
 
         set((state) => ({
           toasts: [...state.toasts, toast],

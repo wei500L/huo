@@ -70,40 +70,35 @@ Call log:
             - generic [ref=e69]: 面子
           - generic [ref=e71]: "40"
           - generic [ref=e73]: "-"
-    - generic [ref=e74]:
-      - generic [ref=e75]:
-        - img "users" [ref=e76]:
-          - img [ref=e77]
-        - generic [ref=e79]: 112/20
-      - button "Open stats dashboard" [ref=e80] [cursor=pointer]:
-        - img "settings" [ref=e81]:
-          - img [ref=e82]
-  - main [ref=e85]:
-    - generic [ref=e86]:
-      - generic [ref=e87]: "[Screen: office]"
-      - button "跳下一屏" [ref=e88] [cursor=pointer]
-  - contentinfo [ref=e89]:
-    - generic [ref=e90]: MAIN BAR
-    - generic [ref=e92]:
-      - img [ref=e96]
-      - paragraph [ref=e100]: "TODO: 先听风向，再定动作。"
-    - generic [ref=e101]:
-      - button "公司管理" [ref=e102] [cursor=pointer]:
-        - img [ref=e104]:
-          - img [ref=e105]
-        - generic [ref=e107]: 公司管理
-      - button "员工沟通" [ref=e108] [cursor=pointer]:
-        - img [ref=e110]:
-          - img [ref=e111]
-        - generic [ref=e113]: 员工沟通
-      - button "项目推进" [ref=e114] [cursor=pointer]:
-        - img [ref=e116]:
-          - img [ref=e117]
-        - generic [ref=e119]: 项目推进
-      - button "财务决策" [ref=e120] [cursor=pointer]:
-        - img [ref=e122]:
-          - img [ref=e123]
-        - generic [ref=e125]: 财务决策
+    - button "设置" [ref=e75] [cursor=pointer]:
+      - img "settings" [ref=e76]:
+        - img [ref=e77]
+  - main [ref=e80]:
+    - generic [ref=e81]:
+      - generic [ref=e82]: "[Screen: office]"
+      - button "跳下一屏" [ref=e83] [cursor=pointer]
+  - contentinfo [ref=e84]:
+    - generic [ref=e85]: MAIN BAR
+    - generic [ref=e87]:
+      - img [ref=e91]
+      - paragraph [ref=e95]: "TODO: 先听风向，再定动作。"
+    - generic [ref=e96]:
+      - button "公司管理" [ref=e97] [cursor=pointer]:
+        - img [ref=e99]:
+          - img [ref=e100]
+        - generic [ref=e102]: 公司管理
+      - button "员工沟通" [ref=e103] [cursor=pointer]:
+        - img [ref=e105]:
+          - img [ref=e106]
+        - generic [ref=e108]: 员工沟通
+      - button "项目推进" [ref=e109] [cursor=pointer]:
+        - img [ref=e111]:
+          - img [ref=e112]
+        - generic [ref=e114]: 项目推进
+      - button "财务决策" [ref=e115] [cursor=pointer]:
+        - img [ref=e117]:
+          - img [ref=e118]
+        - generic [ref=e120]: 财务决策
 ```
 
 # Test source
