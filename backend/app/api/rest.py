@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
+from pydantic.alias_generators import to_camel
 
 from app.api.deps import (
     get_company_service,
@@ -16,6 +17,7 @@ from app.api.deps import (
     get_session_repo,
     get_settlement_orchestrator,
 )
+from app.content import PRESS_TYPES, get_company_templates
 from app.domain import PressType, QuarterPhase
 from app.protocol import (
     CollectGossip,
@@ -48,6 +50,31 @@ from app.services import (
 __all__ = ["router"]
 
 router = APIRouter(prefix="/api/v1", tags=["games"])
+
+
+class CompanyTemplateDTO(BaseModel):
+    model_config = ConfigDict(extra="forbid", populate_by_name=True, alias_generator=to_camel)
+
+    template_id: str
+    name: str
+    name_pool: list[str] = Field(default_factory=list)
+    business: str
+    absurdity: int
+    founding_motto: str
+    founded_year: int
+    starting_promises: list[str] = Field(default_factory=list)
+    death_causes: list[dict[str, str]] = Field(default_factory=list)
+
+
+class PressTypeDTO(BaseModel):
+    model_config = ConfigDict(extra="forbid", populate_by_name=True, alias_generator=to_camel)
+
+    id: str
+    title_zh: str
+    trigger_condition_text: str
+    must_answer_topics: list[str]
+    difficulty: int
+    press_keywords: list[str]
 
 
 class TransitionRequest(BaseModel):
@@ -147,7 +174,66 @@ async def _settlement_bundle(
         new_stats=result.new_stats,
         history_added=result.history_added,
         death=result.death_reason,
+        llm_degraded=result.llm_degraded,
     )
+
+
+def _company_template_dtos() -> list[CompanyTemplateDTO]:
+    return [
+        CompanyTemplateDTO(
+            template_id=str(template["template_id"]),
+            name=str(template["name_pool"][0]),
+            name_pool=[str(name) for name in template["name_pool"]],
+            business=str(template["business"]),
+            absurdity=int(template["absurdity"]),
+            founding_motto=str(template["founding_motto"]),
+            founded_year=int(template["founded_year"]),
+            starting_promises=[str(item) for item in template.get("starting_promises", [])],
+            death_causes=[
+                {"category": str(cause["category"]), "description": str(cause["description"])}
+                for cause in template.get("death_causes", [])
+            ],
+        )
+        for template in get_company_templates()
+    ]
+
+
+def _press_type_dtos() -> list[PressTypeDTO]:
+    return [
+        PressTypeDTO(
+            id=press_id,
+            title_zh=str(entry["title_zh"]),
+            trigger_condition_text=str(entry["trigger_condition_text"]),
+            must_answer_topics=[str(item) for item in entry["must_answer_topics"]],
+            difficulty=int(entry["difficulty"]),
+            press_keywords=[str(item) for item in entry["press_keywords"]],
+        )
+        for press_id, entry in PRESS_TYPES.items()
+    ]
+
+
+async def _create_game_snapshot(
+    payload: CreateGame,
+    service: CompanyService,
+    session_repo: GameSessionRepo,
+    meta_repo: MetaProgressRepo,
+) -> GameSnapshot:
+    session = await service.create_new_run(
+        player_id=payload.player_id,
+        apply_legacies=payload.request_legacies,
+        company_template_id=payload.company_template_id,
+    )
+    return await _snapshot_from_session(session.id, session_repo, meta_repo)
+
+
+@router.get("/company-templates", response_model=list[CompanyTemplateDTO])
+async def list_company_templates() -> list[CompanyTemplateDTO]:
+    return _company_template_dtos()
+
+
+@router.get("/press-types", response_model=list[PressTypeDTO])
+async def get_press_types() -> list[PressTypeDTO]:
+    return _press_type_dtos()
 
 
 @router.post("/games", response_model=GameSnapshot)
@@ -157,8 +243,7 @@ async def create_game(
     session_repo: GameSessionRepo = Depends(get_session_repo),
     meta_repo: MetaProgressRepo = Depends(get_meta_repo),
 ) -> GameSnapshot:
-    session = await service.create_new_run(payload.player_id, payload.request_legacies)
-    return await _snapshot_from_session(session.id, session_repo, meta_repo)
+    return await _create_game_snapshot(payload, service, session_repo, meta_repo)
 
 
 @router.post("/games/{session_id}/decisions/draw", response_model=list[DecisionCardDTO])

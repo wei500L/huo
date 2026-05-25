@@ -35,7 +35,7 @@ class Settings(BaseSettings):
     ) -> tuple[PydanticBaseSettingsSource, ...]:
         """Keep settings construction explicit and test-friendly."""
 
-        return (init_settings,)
+        return (init_settings, env_settings, dotenv_settings, file_secret_settings)
 
 
 @lru_cache(maxsize=1)

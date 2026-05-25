@@ -30,10 +30,6 @@ export const formatMetricDelta = (metricKey: MetricKey, delta: number): string =
 
 export const clampQuote = (value: string | undefined | null): string => {
   const text = (value ?? "").trim();
-  if (!text) {
-    return "-";
-  }
-
   return text.length > 30 ? text.slice(0, 30) : text;
 };
 
@@ -63,7 +59,7 @@ export const resolveMetricStatus = (
 
 export const metricDeltaSummary = (metricsDelta: Partial<Record<MetricKey, number>> | null): string => {
   if (!metricsDelta) {
-    return "-";
+    return "";
   }
 
   const parts = METRIC_ORDER.flatMap((metricKey) => {
@@ -75,7 +71,7 @@ export const metricDeltaSummary = (metricsDelta: Partial<Record<MetricKey, numbe
     return [`${metricKey} ${formatMetricDelta(metricKey, value)}`];
   });
 
-  return parts.length > 0 ? parts.join(" / ") : "-";
+  return parts.join(" / ");
 };
 
 export const buildPromiseRows = (params: {
@@ -88,7 +84,7 @@ export const buildPromiseRows = (params: {
     const parsedMetric = promise.parsed?.metric?.toLowerCase();
     const metricKey: MetricKey = isMetricKey(parsedMetric) ? parsedMetric : METRIC_ORDER[index] ?? "cash";
     const deltaValue = params.metricsDelta?.[metricKey];
-    const delta = typeof deltaValue === "number" ? formatMetricDelta(metricKey, deltaValue) : "—";
+    const delta = typeof deltaValue === "number" ? formatMetricDelta(metricKey, deltaValue) : undefined;
 
     return {
       quarter: `Q${promise.quarterMade}`,
@@ -100,38 +96,21 @@ export const buildPromiseRows = (params: {
     } satisfies PromiseResultItem;
   });
 
-  while (rows.length < 4) {
-    rows.push({
-      quarter: `Q${params.quarter}`,
-      status: "in_progress",
-      text: "-",
-      expected: "-",
-      result: "-",
-      delta: "—",
-    });
-  }
-
   return rows.slice(0, 4);
 };
 
 export const buildBoardComments = (resolvedSettlement: SettlementDTO | null): BoardCommentItem[] => {
   if (!resolvedSettlement) {
-    return [
-      { name: "王董", portraitId: "board_chairman", comment: "-" },
-      { name: "李董", portraitId: "board_chairman", comment: "-" },
-      { name: "陈董", portraitId: "board_chairman", comment: "-" },
-    ];
+    return [];
   }
 
   return [
-    { name: "王董", portraitId: "board_chairman", comment: clampQuote(resolvedSettlement.boardReaction.speech) },
-    { name: "李董", portraitId: "board_chairman", comment: clampQuote(resolvedSettlement.quarterReport) },
     {
-      name: "陈董",
-      portraitId: "board_chairman",
-      comment: clampQuote(metricDeltaSummary(resolvedSettlement.metricsDelta)),
+      name: resolvedSettlement.boardReaction.vote,
+      portraitId: "board_chairman" as const,
+      comment: clampQuote(resolvedSettlement.boardReaction.speech),
     },
-  ];
+  ].filter((item) => item.comment);
 };
 
 export const resolveEmployeeGossipTone = (mood?: string): "rip" | "thinking" | "neutral" => {

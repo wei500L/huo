@@ -45,15 +45,15 @@ describe("App shell", () => {
     expect(screen.getByText("MAIN BAR")).toBeInTheDocument();
   });
 
-  it("switches placeholder screens through the store", () => {
+  it("switches screens through the store", async () => {
     render(<App />);
 
-    expect(screen.getByText("[Screen: onboarding]")).toBeInTheDocument();
+    expect(screen.getByText("欢迎，新任 CEO")).toBeInTheDocument();
 
     act(() => {
       useScreenStore.getState().push("company-select");
     });
 
-    expect(screen.getByText("[Screen: company-select]")).toBeInTheDocument();
+    expect(await screen.findByText("空降 CEO")).toBeInTheDocument();
   });
 });

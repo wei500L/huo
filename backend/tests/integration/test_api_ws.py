@@ -98,7 +98,7 @@ def test_websocket_message_flow_and_heartbeats(
         snapshot = ws.receive_json()
         session_id = snapshot["payload"]["sessionId"]
         assert snapshot["type"] == "game_snapshot"
-        assert snapshot["ack_for"] is not None
+        assert snapshot["ackFor"] is not None
 
         ws.send_text(
             _inbound_envelope(

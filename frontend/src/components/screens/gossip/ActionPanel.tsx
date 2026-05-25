@@ -1,7 +1,7 @@
 import { PixelButton, PixelCard, PixelIcon, type IconName, type Variant } from "@/components/pixel";
 
 export interface Action {
-  id: "note" | "probe" | "comfort" | "leave";
+  id: "note" | "probe" | "leave";
   label: string;
   iconName: IconName;
   variant: "blue" | "green" | "orange" | "red" | "ghost";
@@ -12,17 +12,15 @@ export interface Action {
 
 export interface ActionPanelProps {
   apRemaining: number;
-  apTotal: number;
   actions: Action[];
 }
 
-export function ActionPanel({ apRemaining, apTotal, actions }: ActionPanelProps) {
+export function ActionPanel({ apRemaining, actions }: ActionPanelProps) {
   const normalizedAP = Math.max(0, Math.trunc(apRemaining));
-  const normalizedTotal = Math.max(normalizedAP, Math.trunc(apTotal));
 
   return (
     <PixelCard
-      title={`行动点 AP ${normalizedAP}/${normalizedTotal}`}
+      title={`行动点 AP ${normalizedAP}`}
       titleColor={normalizedAP > 0 ? "blue" : "red"}
       className="w-full"
     >

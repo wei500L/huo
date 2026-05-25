@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import asyncio
 
-from app.api.ws_connection import _map_exception, _send, _toast, _wrap_outbound
+from app.api.ws_connection import _map_exception, _send, _send_snapshot, _toast, _wrap_outbound
 from app.protocol import SettlementBundle, SettleQuarter
+from app.repo.protocols import GameSessionRepo, MetaProgressRepo
 from app.services import DeathReportService, SettlementOrchestrator
 
 __all__ = ["queue_settlement"]
@@ -17,6 +18,8 @@ async def queue_settlement(
     player_id: str,
     orchestrator: SettlementOrchestrator,
     death_report_service: DeathReportService,
+    session_repo: GameSessionRepo,
+    meta_repo: MetaProgressRepo,
 ) -> None:
     await _send(player_id, _toast("settlement_queued", ack_for=ack_for))
     asyncio.create_task(
@@ -25,6 +28,8 @@ async def queue_settlement(
             payload.session_id,
             orchestrator,
             death_report_service,
+            session_repo,
+            meta_repo,
             ack_for,
         )
     )
@@ -35,6 +40,8 @@ async def _settle_background(
     session_id: str,
     orchestrator: SettlementOrchestrator,
     death_report_service: DeathReportService,
+    session_repo: GameSessionRepo,
+    meta_repo: MetaProgressRepo,
     ack_for: str,
 ) -> None:
     try:
@@ -47,8 +54,10 @@ async def _settle_background(
             new_stats=result.new_stats,
             history_added=result.history_added,
             death=result.death_reason,
+            llm_degraded=result.llm_degraded,
         )
         await _send(player_id, _wrap_outbound(bundle, ack_for))
+        await _send_snapshot(player_id, session_id, session_repo, meta_repo, ack_for)
         if result.death_reason is not None:
             report = await death_report_service.generate(session_id, result.death_reason)
             await _send(player_id, _wrap_outbound(report, ack_for))

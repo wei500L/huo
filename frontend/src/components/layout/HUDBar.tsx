@@ -10,10 +10,6 @@ import { useScreenStore } from "@/store/screenStore";
 
 import { DateCard, HUDMetric, LogoBadge } from "./hudParts";
 
-const MOCK_TIME = "09:15";
-const MOCK_DATE = "2025/05/26";
-const MOCK_WEEKDAY = "周一";
-
 const formatDelta = (current?: number, previous?: number): string | undefined => {
   if (!Number.isFinite(current ?? NaN) || !Number.isFinite(previous ?? NaN)) {
     return undefined;
@@ -67,8 +63,6 @@ export const HUDBar = () => {
   const previousStats = latestHistory?.statsBefore ?? null;
 
   const quarterNumber = quarter?.number ?? 0;
-  const hasSnapshot = snapshot !== null;
-
   const coreMetrics = [
     {
       icon: "money" as const,
@@ -104,23 +98,6 @@ export const HUDBar = () => {
     },
   ];
 
-  const legacyMetrics = [
-    {
-      icon: "trending-up" as const,
-      label: "SALES",
-      value: "v2",
-      variant: "orange" as const,
-      dimmed: true,
-    },
-    {
-      icon: "trending-up" as const,
-      label: "MKT",
-      value: "v2",
-      variant: "red" as const,
-      dimmed: true,
-    },
-  ];
-
   return (
     <header className="flex flex-col gap-3 overflow-x-hidden overflow-y-visible border-b-2 border-stroke-ink bg-panel px-3 py-3 sm:px-4 lg:h-20 lg:flex-row lg:items-center lg:py-0">
       <span className="sr-only">HUD</span>
@@ -129,9 +106,9 @@ export const HUDBar = () => {
 
       <DateCard
         day={quarterNumber}
-        time={hasSnapshot ? MOCK_TIME : "-/-"}
-        weekday={hasSnapshot ? MOCK_WEEKDAY : "--"}
-        date={hasSnapshot ? MOCK_DATE : "--/--/--"}
+        time="--:--"
+        weekday={quarter?.phase ?? "--"}
+        date={snapshot?.company.name ?? "--"}
       />
 
       <div className="flex min-w-0 flex-1 flex-wrap items-stretch gap-2 overflow-hidden">
@@ -148,17 +125,6 @@ export const HUDBar = () => {
           </div>
         ))}
 
-        {legacyMetrics.map((metric) => (
-          <div key={metric.label} className="hidden min-w-0 flex-1 xl:flex">
-            <HUDMetric
-              icon={metric.icon}
-              label={metric.label}
-              value={metric.value}
-              variant={metric.variant}
-              dimmed={metric.dimmed}
-            />
-          </div>
-        ))}
       </div>
 
       <div className="flex shrink-0 items-center justify-end gap-2">

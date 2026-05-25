@@ -24,11 +24,12 @@ from app.api.ws_connection import (
     connection_manager,
 )
 from app.api.ws_settlement import queue_settlement
-from app.domain import PressType
+from app.domain import PressType, QuarterPhase
 from app.protocol import (
     CollectGossip,
     CreateGame,
     DecisionAck,
+    DrawDecisions,
     GossipResult,
     MessageDirection,
     Ping,
@@ -36,6 +37,7 @@ from app.protocol import (
     RequestSnapshot,
     SelectDecision,
     SettleQuarter,
+    StateTransition,
     SubmitPress,
 )
 from app.repo.protocols import GameSessionRepo, MetaProgressRepo
@@ -59,9 +61,37 @@ async def _handle_create_game(
     meta_repo: MetaProgressRepo,
     service: CompanyService,
 ) -> None:
-    session = await service.create_new_run(payload.player_id or player_id, payload.request_legacies)
+    session = await service.create_new_run(
+        player_id=payload.player_id or player_id,
+        apply_legacies=payload.request_legacies,
+        company_template_id=payload.company_template_id,
+    )
     await connection_manager.bind_session(player_id, session.id)
     await _send_snapshot(player_id, session.id, session_repo, meta_repo, inbound.id)
+
+
+async def _handle_state_transition(
+    inbound: InboundEnvelope,
+    payload: StateTransition,
+    player_id: str,
+    state_machine: "QuarterStateMachine",
+    session_repo: GameSessionRepo,
+    meta_repo: MetaProgressRepo,
+) -> None:
+    await state_machine.transition_to(payload.session_id, QuarterPhase(payload.target_phase))
+    await _send_snapshot(player_id, payload.session_id, session_repo, meta_repo, inbound.id)
+
+
+async def _handle_draw_decisions(
+    inbound: InboundEnvelope,
+    payload: DrawDecisions,
+    player_id: str,
+    service: DecisionService,
+    session_repo: GameSessionRepo,
+    meta_repo: MetaProgressRepo,
+) -> None:
+    await service.draw_decision_cards(payload.session_id)
+    await _send_snapshot(player_id, payload.session_id, session_repo, meta_repo, inbound.id)
 
 
 async def _handle_select_decision(
@@ -69,6 +99,8 @@ async def _handle_select_decision(
     payload: SelectDecision,
     player_id: str,
     service: DecisionService,
+    session_repo: GameSessionRepo,
+    meta_repo: MetaProgressRepo,
 ) -> None:
     result = await service.select_decision(payload.session_id, payload.card_id)
     ack = DecisionAck.from_domain(
@@ -79,6 +111,7 @@ async def _handle_select_decision(
         next_phase=result.next_phase_hint,
     )
     await _send(player_id, _wrap_outbound(ack, inbound.id))
+    await _send_snapshot(player_id, payload.session_id, session_repo, meta_repo, inbound.id)
 
 
 async def _handle_collect_gossip(
@@ -105,6 +138,8 @@ async def _handle_submit_press(
     payload: SubmitPress,
     player_id: str,
     service: PressInputService,
+    session_repo: GameSessionRepo,
+    meta_repo: MetaProgressRepo,
 ) -> None:
     result = await service.submit(
         payload.session_id,
@@ -120,6 +155,7 @@ async def _handle_submit_press(
         replaced_count=result.replaced_count,
     )
     await _send(player_id, _wrap_outbound(ack, inbound.id))
+    await _send_snapshot(player_id, payload.session_id, session_repo, meta_repo, inbound.id)
 
 
 async def _handle_request_snapshot(
@@ -133,7 +169,7 @@ async def _handle_request_snapshot(
 
 
 async def _handle_ping(inbound: InboundEnvelope, player_id: str) -> None:
-    await _send(player_id, _ack_envelope(inbound.id, "pong"))
+    await _send(player_id, _ack_envelope(inbound.id, "pong", type_name="pong"))
 
 
 async def _dispatch_inbound(
@@ -147,6 +183,7 @@ async def _dispatch_inbound(
     press_service: PressInputService,
     orchestrator: SettlementOrchestrator,
     death_report_service: DeathReportService,
+    state_machine: "QuarterStateMachine",
 ) -> None:
     try:
         if inbound.direction != MessageDirection.INBOUND:
@@ -162,9 +199,36 @@ async def _dispatch_inbound(
                     meta_repo,
                     company_service,
                 )
+            case "state_transition":
+                transition_payload = StateTransition.model_validate(inbound.payload)
+                await _handle_state_transition(
+                    inbound,
+                    transition_payload,
+                    player_id,
+                    state_machine,
+                    session_repo,
+                    meta_repo,
+                )
+            case "draw_decisions":
+                draw_payload = DrawDecisions.model_validate(inbound.payload)
+                await _handle_draw_decisions(
+                    inbound,
+                    draw_payload,
+                    player_id,
+                    decision_service,
+                    session_repo,
+                    meta_repo,
+                )
             case "select_decision":
                 select_payload = SelectDecision.model_validate(inbound.payload)
-                await _handle_select_decision(inbound, select_payload, player_id, decision_service)
+                await _handle_select_decision(
+                    inbound,
+                    select_payload,
+                    player_id,
+                    decision_service,
+                    session_repo,
+                    meta_repo,
+                )
             case "collect_gossip":
                 gossip_payload = CollectGossip.model_validate(inbound.payload)
                 await _handle_collect_gossip(
@@ -177,7 +241,14 @@ async def _dispatch_inbound(
                 )
             case "submit_press":
                 press_payload = SubmitPress.model_validate(inbound.payload)
-                await _handle_submit_press(inbound, press_payload, player_id, press_service)
+                await _handle_submit_press(
+                    inbound,
+                    press_payload,
+                    player_id,
+                    press_service,
+                    session_repo,
+                    meta_repo,
+                )
             case "settle_quarter":
                 settlement_payload = SettleQuarter.model_validate(inbound.payload)
                 await queue_settlement(
@@ -186,6 +257,8 @@ async def _dispatch_inbound(
                     player_id,
                     orchestrator,
                     death_report_service,
+                    session_repo,
+                    meta_repo,
                 )
             case "request_snapshot":
                 snapshot_payload = RequestSnapshot.model_validate(inbound.payload)
@@ -226,7 +299,7 @@ async def _serve_websocket(
     press_service = deps.press_service
     orchestrator = deps.orchestrator
     death_report_service = deps.death_report_service
-    _ = deps.state_machine
+    state_machine = deps.state_machine
     await websocket.accept()
     await connection_manager.on_connect(player_id, websocket, session_id)
     if session_id is not None:
@@ -268,6 +341,7 @@ async def _serve_websocket(
                 press_service,
                 orchestrator,
                 death_report_service,
+                state_machine,
             )
     except WebSocketDisconnect:
         pass

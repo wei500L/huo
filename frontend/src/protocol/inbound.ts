@@ -3,6 +3,8 @@ import type { GossipScene, PressType } from "./types";
 export type InboundType =
   | "create_game"
   | "select_decision"
+  | "state_transition"
+  | "draw_decisions"
   | "collect_gossip"
   | "submit_press"
   | "settle_quarter"
@@ -12,6 +14,17 @@ export type InboundType =
 export interface CreateGamePayload {
   playerId?: string;
   requestLegacies: boolean;
+  companyTemplateId?: string;
+}
+
+export interface StateTransitionPayload {
+  sessionId: string;
+  targetPhase: "GOSSIP" | "DECISION" | "PRESS" | "SETTLEMENT" | "DONE";
+}
+
+export interface DrawDecisionsPayload {
+  sessionId: string;
+  quarterNumber: number;
 }
 
 export interface SelectDecisionPayload {
@@ -49,6 +62,8 @@ export interface PingPayload {
 
 export type InboundPayload =
   | CreateGamePayload
+  | StateTransitionPayload
+  | DrawDecisionsPayload
   | SelectDecisionPayload
   | CollectGossipPayload
   | SubmitPressPayload

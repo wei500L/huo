@@ -20,6 +20,7 @@ from app.llm import LLMTimeoutError
 from app.protocol import ErrorOutbound
 from app.services import (
     DecisionNotFound,
+    CardNotInDraw,
     GossipServiceError,
     IllegalTransitionError,
     InsufficientAP,
@@ -90,6 +91,7 @@ def create_app() -> FastAPI:
 def _register_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(SessionNotFound, _session_not_found)
     app.add_exception_handler(DecisionNotFound, _session_not_found)
+    app.add_exception_handler(CardNotInDraw, _conflict)
     app.add_exception_handler(InvalidTerminalSession, _conflict)
     app.add_exception_handler(IllegalTransitionError, _conflict)
     app.add_exception_handler(NotInSettlementPhase, _conflict)

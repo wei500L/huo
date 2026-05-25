@@ -39,8 +39,14 @@ const memoryStorage = createMemoryStorage();
 
 const getBrowserStorage = (): StateStorage => {
   try {
-    if (typeof globalThis !== "undefined" && globalThis.localStorage) {
-      return globalThis.localStorage;
+    const storage = typeof globalThis !== "undefined" ? globalThis.localStorage : null;
+    if (
+      storage &&
+      typeof storage.getItem === "function" &&
+      typeof storage.setItem === "function" &&
+      typeof storage.removeItem === "function"
+    ) {
+      return storage;
     }
   } catch {
     return memoryStorage;

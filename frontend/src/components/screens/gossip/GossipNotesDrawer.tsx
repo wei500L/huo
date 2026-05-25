@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import clsx from "clsx";
 
 import { PixelButton, PixelCard, PixelIcon } from "@/components/pixel";
@@ -14,44 +14,14 @@ export interface GossipNotesDrawerProps {
   notes: GossipNoteItem[];
 }
 
-const MOCK_NOTES: GossipNoteItem[] = [
-  {
-    id: "mock-note-finance",
-    notedAt: "v1-mock",
-    lead: {
-      id: "mock-finance-burn",
-      quarter: 1,
-      scene: "tearoom",
-      text: "财务说下月预算会被董事会逐项追问。",
-      reliability: "LIKELY",
-      linkedEmployeeIds: ["emp-01"],
-      apCost: 1,
-    },
-  },
-  {
-    id: "mock-note-product",
-    notedAt: "v1-mock",
-    lead: {
-      id: "mock-product-delay",
-      quarter: 1,
-      scene: "tearoom",
-      text: "产品组把演示版本叫作“能跑就算赢”。",
-      reliability: "RUMOR",
-      linkedEmployeeIds: ["emp-03"],
-      apCost: 1,
-    },
-  },
-];
-
 export function GossipNotesDrawer({ notes }: GossipNotesDrawerProps) {
   const [open, setOpen] = useState(false);
-  const allNotes = useMemo(() => [...MOCK_NOTES, ...notes], [notes]);
 
   return (
     <aside className="absolute bottom-px-md right-px-md z-20 w-[320px] max-w-[calc(100vw-32px)]">
       {open ? (
         <PixelCard
-          title={`茶水间笔记 ${allNotes.length}`}
+          title={`茶水间笔记 ${notes.length}`}
           titleColor="orange"
           badge={
             <button
@@ -65,7 +35,12 @@ export function GossipNotesDrawer({ notes }: GossipNotesDrawerProps) {
           }
         >
           <div className="max-h-[260px] space-y-px-sm overflow-y-auto pr-px-xs" data-testid="gossip-notes-list">
-            {allNotes.map((note) => (
+            {notes.length === 0 ? (
+              <div className="border-2 border-stroke-ink bg-panel-dim p-px-sm text-px-sm text-ink-2">
+                暂无笔记
+              </div>
+            ) : null}
+            {notes.map((note) => (
               <article key={note.id} className="border-2 border-stroke-ink bg-panel-dim p-px-sm">
                 <div className="mb-px-xs flex items-center justify-between gap-px-sm text-px-xs text-ink-2">
                   <span>Q{note.lead.quarter}</span>
@@ -85,7 +60,7 @@ export function GossipNotesDrawer({ notes }: GossipNotesDrawerProps) {
             variant="ghost"
             onClick={() => setOpen(true)}
           >
-            笔记 {allNotes.length}
+            笔记 {notes.length}
           </PixelButton>
         </div>
       )}

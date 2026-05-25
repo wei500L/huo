@@ -1,6 +1,5 @@
 import type { Envelope } from "@/protocol/envelope";
 
-import { createMockDataSource } from "./mockAdapter";
 import { createWebSocketDataSource } from "./wsClient";
 
 export type DataSourceStatus =
@@ -19,6 +18,6 @@ export interface DataSource {
   status: DataSourceStatus;
 }
 
-export function createDataSource(mode: "mock" | "ws", config: { wsUrl?: string }): DataSource {
-  return mode === "ws" ? createWebSocketDataSource(config.wsUrl) : createMockDataSource();
+export function createDataSource(config: { wsUrl?: string }): DataSource {
+  return createWebSocketDataSource(config.wsUrl);
 }

@@ -63,9 +63,7 @@ export const createEmptyDataState = (): GameDataState => ({
   history: [],
   latestGossipLead: null,
   gossipNotes: [],
-  gossipTrust: {
-    employee_lin_xiaoman: 62,
-  },
+  gossipTrust: {},
   pressDraft: "",
   pendingDecision: null,
   pendingSettlementBundle: null,

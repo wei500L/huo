@@ -72,7 +72,6 @@ async def test_full_loop_death_generates_death_report_and_persists_meta(
     assert q1_card.category == DecisionCategory.LAYOFF
     assert q1_card.immediate_effect.MORALE == -50
     await decision_service.select_decision(session.id, q1_card.id, rng_seed=1)
-    await state_machine.enter_settlement_phase(session.id)
     q1_result = await orchestrator.settle_quarter(session.id)
     assert q1_result.death_reason is None
 
@@ -87,7 +86,6 @@ async def test_full_loop_death_generates_death_report_and_persists_meta(
     q2_drawn = await decision_service.draw_decision_cards(session.id, rng_seed=2)
     q2_card = q2_drawn.quarter.decision_cards[0]
     await decision_service.select_decision(session.id, q2_card.id, rng_seed=2)
-    await state_machine.enter_settlement_phase(session.id)
     q2_result = await orchestrator.settle_quarter(session.id)
     assert q2_result.death_reason is not None
 

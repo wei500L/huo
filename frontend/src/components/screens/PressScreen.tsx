@@ -1,27 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { PixelButton, PixelDialog } from "@/components/pixel";
-import { createMockDataSource } from "@/net/mockAdapter";
-import { makeEnvelope } from "@/protocol/envelope";
+import { loadPressTypes, submitPress as submitPressMessage } from "@/net/gameClient";
 import type { SubmitPressPayload } from "@/protocol/inbound";
+import type { PressTypeDTO } from "@/protocol/types";
 import { selectCurrentQuarter, selectInflight, selectPressDraft, selectSessionId } from "@/store/selectors";
 import { useGameStore } from "@/store/gameStore";
 import { useScreenStore } from "@/store/screenStore";
 
 import { CameraPlaceholder } from "./press/CameraPlaceholder";
 import { MustAnswerPanel } from "./press/MustAnswerPanel";
-import { PRESS_REPORTERS } from "./press/constants";
 import { PressTranscriptInput } from "./press/PressTranscriptInput";
-import { ReporterList } from "./press/ReporterList";
-
-const dataSource = createMockDataSource();
-void dataSource.connect("press-ceo");
-
-const MUST_ANSWER_ITEMS = [
-  "这次发布会先说明现金流和财报口径。",
-  "外界最关心裁员传闻，你怎么回应？",
-  "产品路线图和交付节奏会不会变？",
-];
 
 const MIN_WORDS = 30;
 const MAX_WORDS = 300;
@@ -36,9 +25,11 @@ export function PressScreen() {
   const setInflight = useGameStore((state) => state.setInflight);
   const setPressDraft = useGameStore((state) => state.setPressDraft);
   const pushToast = useGameStore((state) => state.pushToast);
-  const replace = useScreenStore((state) => state.replace);
   const setChrome = useScreenStore((state) => state.setChrome);
   const [skipDialogOpen, setSkipDialogOpen] = useState(false);
+  const [pressTypes, setPressTypes] = useState<PressTypeDTO[]>([]);
+  const [selectedPressTypeId, setSelectedPressTypeId] = useState<PressTypeDTO["id"] | null>(null);
+  const [pressTypesLoading, setPressTypesLoading] = useState(true);
   const quarterNumber = quarter?.number;
 
   useEffect(() => {
@@ -46,24 +37,63 @@ export function PressScreen() {
     return () => setChrome({ hud: true, mainBar: true });
   }, [setChrome]);
 
+  useEffect(() => {
+    let cancelled = false;
+    setPressTypesLoading(true);
+    loadPressTypes()
+      .then((items) => {
+        if (!cancelled) {
+          setPressTypes(items);
+          setSelectedPressTypeId((current) =>
+            current && items.some((item) => item.id === current) ? current : null,
+          );
+        }
+      })
+      .catch((error: unknown) => {
+        if (cancelled) {
+          return;
+        }
+        pushToast({
+          id: `press-types-load-${Date.now()}`,
+          level: "error",
+          message: "发布会配置加载失败",
+          hint: error instanceof Error ? error.message : "请检查后端配置",
+        });
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setPressTypesLoading(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [pushToast]);
+
   const wordCount = useMemo(() => countUnits(transcript), [transcript]);
-  const canSubmit = wordCount >= MIN_WORDS && wordCount <= MAX_WORDS && Boolean(sessionId) && quarterNumber === 3;
+  const activePressType = pressTypes.find((item) => item.id === selectedPressTypeId) ?? null;
+  const canSubmit =
+    wordCount >= MIN_WORDS &&
+    wordCount <= MAX_WORDS &&
+    Boolean(sessionId) &&
+    quarterNumber === 3 &&
+    quarter?.phase === "PRESS" &&
+    Boolean(activePressType);
 
   const submitPress = useCallback(() => {
-    if (!canSubmit || inflight.submitPress) {
+    if (!canSubmit || inflight.submitPress || !activePressType) {
       return;
     }
 
     const payload: SubmitPressPayload = {
       sessionId: sessionId ?? "missing-session",
       quarterNumber: 3,
-      pressType: "INAUGURATION",
+      pressType: activePressType.id,
       transcript,
-      durationS: 47,
     };
 
     setInflight("submitPress", true);
-    void dataSource.send(makeEnvelope("submit_press", payload)).catch((error: unknown) => {
+    void submitPressMessage(payload).catch((error: unknown) => {
       setInflight("submitPress", false);
       pushToast({
         id: crypto.randomUUID(),
@@ -71,14 +101,19 @@ export function PressScreen() {
         message: error instanceof Error ? error.message : "发言提交失败",
       });
     });
-  }, [canSubmit, inflight.submitPress, pushToast, sessionId, setInflight, transcript]);
+  }, [activePressType, canSubmit, inflight.submitPress, pushToast, sessionId, setInflight, transcript]);
 
   const openSkipDialog = useCallback(() => setSkipDialogOpen(true), []);
   const closeSkipDialog = useCallback(() => setSkipDialogOpen(false), []);
   const confirmSkip = useCallback(() => {
     setSkipDialogOpen(false);
-    replace("settlement");
-  }, [replace]);
+    pushToast({
+      id: `press-skip-unavailable-${Date.now()}`,
+      level: "warn",
+      message: "跳过发布会暂未接入真实接口",
+      hint: "需要后端提供跳过发布会的结算输入",
+    });
+  }, [pushToast]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -101,7 +136,7 @@ export function PressScreen() {
       <div className="mx-auto flex min-h-full max-w-[1600px] flex-col gap-px-md">
         <header className="flex flex-wrap items-center justify-between gap-px-sm border-2 border-stroke-ink bg-panel px-px-md py-px-sm shadow-hard">
           <h1 className="text-px-lg leading-none text-ink-1">发布会输入屏</h1>
-          <p className="text-px-sm leading-none text-ink-2">文字模式先上，摄像头占位留给任务 22</p>
+          <p className="text-px-sm leading-none text-ink-2">{quarter?.phase ?? "等待后端阶段"}</p>
         </header>
 
         <main className="grid min-h-0 gap-px-md lg:grid-cols-12">
@@ -111,20 +146,55 @@ export function PressScreen() {
           </div>
 
           <div className="min-w-0 space-y-px-md lg:col-span-5">
-            <MustAnswerPanel items={MUST_ANSWER_ITEMS} transcript={transcript} />
-            <ReporterList items={[...PRESS_REPORTERS]} />
+            <section className="border-2 border-stroke-ink bg-panel shadow-hard">
+              <div className="border-b-2 border-stroke-ink bg-pixel-green px-px-md py-px-sm text-white">
+                <h2 className="text-px-md leading-none">发布会类型</h2>
+              </div>
+              <div className="space-y-px-xs p-px-md">
+                {pressTypesLoading ? (
+                  <div className="border-2 border-stroke-ink bg-panel-dim px-px-sm py-px-sm text-px-sm text-ink-2">
+                    发布会配置加载中
+                  </div>
+                ) : null}
+                {!pressTypesLoading && pressTypes.length === 0 ? (
+                  <div className="border-2 border-stroke-ink bg-panel-dim px-px-sm py-px-sm text-px-sm text-ink-2">
+                    暂无后端发布会类型
+                  </div>
+                ) : null}
+                {pressTypes.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className={[
+                      "w-full border-2 px-px-sm py-px-sm text-left text-px-sm leading-normal",
+                      selectedPressTypeId === item.id
+                        ? "border-stroke-ink bg-pixel-blue text-white"
+                        : "border-panel-dim bg-panel-dim text-ink-2",
+                    ].join(" ")}
+                    onClick={() => setSelectedPressTypeId(item.id)}
+                  >
+                    <span className="block text-px-md leading-tight">{item.titleZh}</span>
+                    <span className="mt-1 block text-px-xs leading-normal opacity-90">{item.triggerConditionText}</span>
+                  </button>
+                ))}
+              </div>
+            </section>
+            <MustAnswerPanel
+              items={activePressType?.mustAnswerTopics ?? []}
+              transcript={transcript}
+            />
           </div>
         </main>
 
         <footer className="mt-auto grid gap-px-sm pt-px-md md:grid-cols-3">
           <div className="w-full">
             <PixelButton variant="blue" size="lg" fullWidth disabled={!canSubmit || inflight.submitPress} onClick={submitPress}>
-              发言完毕
+              {pressTypesLoading ? "加载发布会配置" : "发言完毕"}
             </PixelButton>
           </div>
           <div className="w-full">
             <PixelButton variant="red" size="lg" fullWidth onClick={openSkipDialog}>
-              跳过 (扣 FACE -10)
+              跳过发布会
             </PixelButton>
           </div>
           <div className="w-full">

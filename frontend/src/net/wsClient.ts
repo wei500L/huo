@@ -37,7 +37,7 @@ class WsClient implements DataSource {
     this.sessionId = sessionId;
     this.manuallyClosed = false;
     this.reconnectAttempts = 0;
-    this.openSocket("connecting");
+    await this.openSocket("connecting");
   }
 
   public disconnect(): void {
@@ -61,7 +61,7 @@ class WsClient implements DataSource {
     this.listeners.add(cb);
   }
 
-  private openSocket(status: DataSourceStatus): void {
+  private openSocket(status: DataSourceStatus): Promise<void> {
     if (!this.playerId) {
       throw new Error("[wsClient] playerId is required before opening a socket");
     }
@@ -72,48 +72,52 @@ class WsClient implements DataSource {
 
     const query = this.sessionId ? `?session_id=${encodeURIComponent(this.sessionId)}` : "";
     const url = `${this.wsUrl}/${encodeURIComponent(this.playerId)}${query}`;
-    const socket = new WebSocket(url);
-    this.socket = socket;
+    return new Promise((resolve, reject) => {
+      const socket = new WebSocket(url);
+      this.socket = socket;
 
-    socket.onopen = () => {
-      this.reconnectAttempts = 0;
-      this.lastInboundAt = Date.now();
-      this.setStatus("open");
-      this.startHeartbeat();
-    };
+      socket.onopen = () => {
+        this.reconnectAttempts = 0;
+        this.lastInboundAt = Date.now();
+        this.setStatus("open");
+        this.startHeartbeat();
+        resolve();
+      };
 
-    socket.onmessage = (event) => {
-      this.lastInboundAt = Date.now();
-      const envelope = parseEnvelope(event.data);
-      if (!envelope) {
-        useNetworkStore.getState().setError("invalid_envelope");
-        return;
-      }
+      socket.onmessage = (event) => {
+        this.lastInboundAt = Date.now();
+        const envelope = parseEnvelope(event.data);
+        if (!envelope) {
+          useNetworkStore.getState().setError("invalid_envelope");
+          return;
+        }
 
-      dispatch(envelope);
-      for (const listener of this.listeners) {
-        listener(envelope);
-      }
-    };
+        dispatch(envelope);
+        for (const listener of this.listeners) {
+          listener(envelope);
+        }
+      };
 
-    socket.onerror = () => {
-      useNetworkStore.getState().setError("websocket_error");
-    };
+      socket.onerror = () => {
+        useNetworkStore.getState().setError("websocket_error");
+        reject(new Error("websocket_error"));
+      };
 
-    socket.onclose = () => {
-      if (this.socket === socket) {
-        this.socket = null;
-      }
-      this.clearHeartbeat();
+      socket.onclose = () => {
+        if (this.socket === socket) {
+          this.socket = null;
+        }
+        this.clearHeartbeat();
 
-      if (this.manuallyClosed) {
+        if (this.manuallyClosed) {
+          this.setStatus("closed");
+          return;
+        }
+
         this.setStatus("closed");
-        return;
-      }
-
-      this.setStatus("closed");
-      this.scheduleReconnect();
-    };
+        this.scheduleReconnect();
+      };
+    });
   }
 
   private startHeartbeat(): void {
@@ -143,7 +147,7 @@ class WsClient implements DataSource {
     const delayMs = RECONNECT_BACKOFF_MS[this.reconnectAttempts];
     this.reconnectTimer = setTimeout(() => {
       this.reconnectAttempts += 1;
-      this.openSocket("reconnecting");
+      void this.openSocket("reconnecting").catch(() => undefined);
     }, delayMs);
   }
 

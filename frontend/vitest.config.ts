@@ -13,6 +13,7 @@ export default defineConfig({
   },
   test: {
     include: ["tests/**/*.{test,spec,smoke}.{ts,tsx}"],
+    exclude: ["tests/e2e/**", "node_modules/**", "dist/**"],
     environment: "jsdom",
     setupFiles: ["./tests/setup.ts"],
     globals: true,

@@ -1,16 +1,11 @@
 import { useCallback, useEffect, useMemo } from "react";
 
 import { PixelButton, PixelPortrait, PixelSpeechBubble } from "@/components/pixel";
-import { createMockDataSource } from "@/net/mockAdapter";
-import { makeEnvelope } from "@/protocol/envelope";
 import { useScreenStore } from "@/store/screenStore";
 
 import { IntroCard } from "./onboarding/IntroCard";
 import { JourneySteps, type JourneyStepStatusLabels } from "./onboarding/JourneySteps";
 import type { StatusItem } from "./onboarding/StatusList";
-
-const dataSource = createMockDataSource();
-void dataSource.connect("onboarding-ceo");
 
 export interface OnboardingScreenProps {
   eyebrow?: string;
@@ -75,7 +70,6 @@ export function OnboardingScreen({
   }, [setChrome]);
 
   const handleStart = useCallback(() => {
-    void dataSource.send(makeEnvelope("create_game", { requestLegacies: true }));
     replace("company-select");
   }, [replace]);
 

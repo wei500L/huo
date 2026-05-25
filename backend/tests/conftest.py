@@ -104,7 +104,10 @@ def full_stack(
     company_service = CompanyService(session_repo=session_repo, meta_repo=meta_repo)
     decision_service = DecisionService(session_repo=session_repo, state_machine=state_machine)
     gossip_service = GossipService(session_repo=session_repo)
-    press_input_service = PressInputService(session_repo=session_repo)
+    press_input_service = PressInputService(
+        session_repo=session_repo,
+        state_machine=state_machine,
+    )
     aggregator = SettlementInputAggregator(
         session_repo=session_repo,
         meta_repo=meta_repo,

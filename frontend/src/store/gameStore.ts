@@ -49,8 +49,6 @@ export interface GameStoreState extends GameDataState {
   setLLMDegraded: (v: boolean) => void;
   resetForNewRun: () => void;
   addGossipNote: (lead: GossipLeadDTO) => void;
-  adjustGossipTrust: (employeeId: string, delta: number) => void;
-  spendGossipAP: (cost: number) => void;
   setPressDraft: (draft: string) => void;
 }
 
@@ -95,22 +93,9 @@ export const useGameStore = create<GameStoreState>()(
 
         const clean = deepStripForbiddenFields(a);
         set((state) => {
-          const snapshot = state.snapshot
-            ? {
-                ...state.snapshot,
-                stats: clean.immediateStats,
-                quarter: {
-                  ...state.snapshot.quarter,
-                  selectedDecisionId: clean.cardId,
-                  phase: clean.nextPhase,
-                },
-              }
-            : state.snapshot;
-
           return {
-            snapshot,
             pendingDecision:
-              snapshot?.quarter.decisionCards.find((card) => card.id === clean.cardId) ?? null,
+              state.snapshot?.quarter.decisionCards.find((card) => card.id === clean.cardId) ?? null,
             inflight: { ...state.inflight, selectDecision: false },
           };
         });
@@ -165,35 +150,12 @@ export const useGameStore = create<GameStoreState>()(
             };
           }
 
-          if (!state.snapshot || state.snapshot.quarter.number !== clean.quarterNumber) {
-            return {
-              inflight: { ...state.inflight, submitPress: false },
-            };
-          }
-
-          const pressInput = state.snapshot.quarter.pressInput
-            ? {
-                ...state.snapshot.quarter.pressInput,
-                flags: clean.flags,
-              }
-            : state.snapshot.quarter.pressInput;
-
           return {
-            snapshot: {
-              ...state.snapshot,
-              quarter: {
-                ...state.snapshot.quarter,
-                phase: "SETTLEMENT" as const,
-                pressInput,
-              },
-            },
             inflight: { ...state.inflight, submitPress: false },
           };
         });
         if (rejected) {
           useScreenStore.getState().replace("press");
-        } else {
-          useScreenStore.getState().replace("settlement");
         }
       },
       ingestSettlementBundle: (b) => {
@@ -204,25 +166,7 @@ export const useGameStore = create<GameStoreState>()(
 
         const clean = deepStripForbiddenFields(b);
         set((state) => {
-          const history = [...state.history, clean.historyAdded];
-          const nextSnapshot = state.snapshot
-            ? {
-                ...state.snapshot,
-                status: clean.death ? "dead" : clean.quarterNumber >= 4 ? "won" : state.snapshot.status,
-                stats: clean.newStats,
-                history,
-                quarter: {
-                  ...state.snapshot.quarter,
-                  phase: "DONE" as const,
-                  settlement: clean.settlement,
-                  pressBundle: clean.pressBundle ?? state.pressBundle ?? undefined,
-                },
-              }
-            : state.snapshot;
-
           return {
-            snapshot: nextSnapshot,
-            history,
             pendingDecision: null,
             pendingSettlementBundle: clean,
             pressBundle: clean.pressBundle ?? state.pressBundle ?? null,
@@ -242,19 +186,7 @@ export const useGameStore = create<GameStoreState>()(
 
         const clean = deepStripForbiddenFields(b);
         set((state) => {
-          const snapshot = state.snapshot
-            ? {
-                ...state.snapshot,
-                status: "dead" as const,
-                quarter: {
-                  ...state.snapshot.quarter,
-                  phase: "DONE" as const,
-                },
-              }
-            : state.snapshot;
-
           return {
-            snapshot,
             pendingDecision: null,
             pendingDeathBundle: clean,
             inflight: { ...state.inflight, settleQuarter: false },

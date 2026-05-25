@@ -28,11 +28,20 @@ export const MainActionBar = ({ dimmed = false }: MainActionBarProps) => {
   const snapshot = useGameStore(selectCurrentSnapshot);
   const badgeCounts = useGameStore(selectMainActionBarBadgeCounts, shallow);
   const contextHint = useGameStore(selectMainActionBarContextHint, shallow);
-  const currentScreenId = useScreenStore((state) => state.current.id);
   const pushScreen = useScreenStore((state) => state.push);
-  const pushToast = useGameStore((state) => state.pushToast);
 
   const isDisabled = snapshot?.status !== "active" || dimmed;
+  const phase = snapshot?.quarter.phase;
+  const phaseScreen =
+    phase === "GOSSIP"
+      ? "gossip"
+      : phase === "DECISION"
+        ? "decision"
+        : phase === "PRESS"
+          ? "press"
+          : phase === "SETTLEMENT" || phase === "DONE"
+            ? "settlement"
+            : "office";
 
   const actions = useMemo(
     () => [
@@ -50,27 +59,23 @@ export const MainActionBar = ({ dimmed = false }: MainActionBarProps) => {
         label: "员工沟通",
         hotkey: "2" as const,
         badgeCount: badgeCounts.employeeCommunication,
-        onClick: () => pushScreen("office"),
+        onClick: () => pushScreen(phase === "GOSSIP" ? "gossip" : "office"),
       },
       {
         variant: "orange" as const,
         icon: "trending-up" as const,
-        label: "项目推进",
-        ariaLabel: currentScreenId === "office" ? "处理董事会关系" : undefined,
+        label: "当前阶段",
         hotkey: "3" as const,
         badgeCount: badgeCounts.projectProgress,
-        onClick: () => {
-          pushToast({ id: "main-action-project-v2-toast", level: "info", message: "v2 即将开放" });
-          pushScreen("decision");
-        },
+        onClick: () => pushScreen(phaseScreen),
       },
       {
         variant: "red" as const,
         icon: "money" as const,
-        label: currentScreenId === "office" ? "拉高市场热度" : "财务决策",
+        label: "决策/发布会",
         hotkey: "4" as const,
         badgeCount: badgeCounts.financialDecision,
-        onClick: () => pushScreen(currentScreenId === "office" ? "press" : "decision"),
+        onClick: () => pushScreen(phase === "DECISION" || phase === "PRESS" ? phaseScreen : "office"),
       },
     ],
     [
@@ -78,9 +83,9 @@ export const MainActionBar = ({ dimmed = false }: MainActionBarProps) => {
       badgeCounts.employeeCommunication,
       badgeCounts.financialDecision,
       badgeCounts.projectProgress,
-      currentScreenId,
+      phase,
+      phaseScreen,
       pushScreen,
-      pushToast,
     ],
   );
 
@@ -129,7 +134,6 @@ export const MainActionBar = ({ dimmed = false }: MainActionBarProps) => {
             key={action.label}
             badgeCount={action.badgeCount}
             disabled={isDisabled}
-            ariaLabel={action.ariaLabel}
             icon={action.icon}
             hotkey={action.hotkey}
             label={action.label}

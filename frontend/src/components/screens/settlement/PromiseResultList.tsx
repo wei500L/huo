@@ -39,38 +39,43 @@ export const PromiseResultList = ({ items }: Props) => {
           <span className="text-right">delta</span>
         </div>
 
-        {visibleItems.map((item) => {
-          const status = STATUS_STYLE[item.status];
-          return (
-            <div
-              key={`${item.quarter}-${item.text}`}
-              className="grid grid-cols-[40px_56px_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_70px] items-center gap-2 border-b-2 border-panel-dim py-2 last:border-b-0"
-            >
-              <span className="flex h-8 items-center justify-center border-2 border-stroke-ink bg-panel-dim font-retro text-[9px] leading-none">
-                {item.quarter}
-              </span>
+        {visibleItems.length > 0 ? (
+          visibleItems.map((item) => {
+            const status = STATUS_STYLE[item.status];
+            return (
+              <div
+                key={`${item.quarter}-${item.text}`}
+                className="grid grid-cols-[40px_56px_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_70px] items-center gap-2 border-b-2 border-panel-dim py-2 last:border-b-0"
+              >
+                <span className="flex h-8 items-center justify-center border-2 border-stroke-ink bg-panel-dim font-retro text-[9px] leading-none">
+                  {item.quarter}
+                </span>
 
-              <span className={clsx("flex items-center gap-1 text-px-sm leading-none", status.tone)}>
-                <PixelIcon
-                  ariaLabel={status.label}
-                  className={clsx(item.status === "in_progress" && "animate-spin")}
-                  name={status.icon}
-                  size={16}
-                />
-                {status.label}
-              </span>
+                <span className={clsx("flex items-center gap-1 text-px-sm leading-none", status.tone)}>
+                  <PixelIcon
+                    ariaLabel={status.label}
+                    className={clsx(item.status === "in_progress" && "animate-spin")}
+                    name={status.icon}
+                    size={16}
+                  />
+                  {status.label}
+                </span>
 
-              <span className="min-w-0 truncate text-px-sm leading-none text-ink-1">{item.text || "-"}</span>
-              <span className="min-w-0 truncate text-px-sm leading-none text-ink-2">{item.expected || "-"}</span>
-              <span className="min-w-0 truncate text-px-sm leading-none text-ink-1">{item.result || "-"}</span>
-              <span className={clsx("text-right font-retro text-[9px] leading-none", status.tone)}>
-                {item.delta || "—"}
-              </span>
-            </div>
-          );
-        })}
+                <span className="min-w-0 truncate text-px-sm leading-none text-ink-1">{item.text}</span>
+                <span className="min-w-0 truncate text-px-sm leading-none text-ink-2">{item.expected}</span>
+                <span className="min-w-0 truncate text-px-sm leading-none text-ink-1">{item.result}</span>
+                <span className={clsx("text-right font-retro text-[9px] leading-none", status.tone)}>
+                  {item.delta ?? ""}
+                </span>
+              </div>
+            );
+          })
+        ) : (
+          <div className="border-b-2 border-panel-dim py-4 text-center text-px-sm text-ink-2">
+            后端暂无承诺结果
+          </div>
+        )}
       </div>
     </PixelCard>
   );
 };
-

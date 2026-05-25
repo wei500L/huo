@@ -19,9 +19,13 @@ export const RiskPanel = ({ risks, onViewAll }: RiskPanelProps) => {
 
       <div className="flex min-h-0 flex-1 flex-col gap-px-md p-px-md">
         <div className="flex min-h-0 flex-1 flex-col gap-px-md overflow-y-auto">
-          {visibleRisks.map((risk) => (
-            <RiskCard key={risk.id} risk={risk} />
-          ))}
+          {visibleRisks.length > 0 ? (
+            visibleRisks.map((risk) => <RiskCard key={risk.id} risk={risk} />)
+          ) : (
+            <div className="border-2 border-stroke-ink bg-panel-dim px-px-md py-px-lg text-center text-px-sm leading-normal text-ink-2">
+              后端暂无风险项
+            </div>
+          )}
         </div>
 
         <PixelButton

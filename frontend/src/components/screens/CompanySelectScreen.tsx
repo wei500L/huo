@@ -1,73 +1,52 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { PixelButton, PixelIcon, PixelPortrait, PixelSpeechBubble } from "@/components/pixel";
-import { createMockDataSource } from "@/net/mockAdapter";
-import { makeEnvelope } from "@/protocol/envelope";
+import { PixelButton, PixelIcon, PixelPortrait, PixelSpeechBubble, type IconName } from "@/components/pixel";
+import { createGame, loadCompanyTemplates, loadPlayerMeta } from "@/net/gameClient";
+import type { CompanyTemplateDTO, MetaSummaryDTO } from "@/protocol/types";
 import { useGameStore } from "@/store/gameStore";
 import { useScreenStore } from "@/store/screenStore";
 
 import { CompanyChoiceCard, type CompanyChoice } from "./companySelect/CompanyChoiceCard";
 import type { MilestoneItem } from "./companySelect/MilestoneList";
 import { RevengeProgressPanel, type RevengeProgressMeta } from "./companySelect/RevengeProgressPanel";
-import { ResourceShelf } from "./companySelect/ResourceShelf";
 
-const companySelectDataSource = createMockDataSource();
-void companySelectDataSource.connect("company-select-ceo");
+const CHOICE_ICONS: IconName[] = ["target", "message", "settings", "briefcase"];
+const CHOICE_COLORS: CompanyChoice["brandColor"][] = ["blue", "green", "purple", "orange"];
 
-const COMPANY_CHOICES: CompanyChoice[] = [
-  {
-    templateId: "C-01",
-    name: "灵眸科技",
-    business: "计算机视觉芯片",
-    tag: "AI",
-    iconName: "target",
-    brandColor: "blue",
-    description: "计算机视觉芯片量产前夜，烧钱、内斗和董事会压力一起爆表。",
-    currentStakePercent: 12.5,
-  },
-  {
-    templateId: "C-02",
-    name: "源语互动",
-    business: "独立游戏研发",
-    tag: "游戏研发",
-    iconName: "message",
-    brandColor: "green",
-    description: "独立游戏研发团队卡在上线前，玩家期待和现金流都快见底。",
-    currentStakePercent: 5.1,
-  },
-  {
-    templateId: "C-03",
-    name: "钛深智能",
-    business: "工业 AI 解决方案",
-    tag: "工业科技",
-    iconName: "settings",
-    brandColor: "purple",
-    description: "工业 AI 解决方案刚签大单，交付、合规和老股东都在等你翻车。",
-    currentStakePercent: 0,
-  },
-];
+const toCompanyChoice = (template: CompanyTemplateDTO, index: number): CompanyChoice => ({
+  templateId: template.templateId,
+  name: template.name,
+  business: template.business,
+  tag: `荒诞度 ${template.absurdity}`,
+  iconName: CHOICE_ICONS[index % CHOICE_ICONS.length],
+  brandColor: CHOICE_COLORS[index % CHOICE_COLORS.length],
+  description: template.deathCauses[0]?.description ?? template.foundingMotto,
+});
 
-const MOCK_META_PROGRESS: RevengeProgressMeta = {
-  reputation: 1350,
-  totalStakePercent: 18,
-  unlockedCount: 3,
-  totalUnlockCount: 10,
-};
+const toProgressMeta = (meta: MetaSummaryDTO | null): RevengeProgressMeta | null =>
+  meta
+    ? {
+        totalRuns: meta.totalRuns,
+        deathLogCount: meta.deathLogCount,
+        pressArchiveCount: meta.pressArchiveCount,
+        unlockedCount: meta.unlockedLegacies.length + meta.unlockedStyles.length,
+      }
+    : null;
 
-const MILESTONES: MilestoneItem[] = [
-  { value: 30, label: "声望", achieved: true },
-  { value: 50, label: "声望", achieved: true },
-  { value: 100, label: "声望", achieved: true },
-  { value: 200, label: "声望", achieved: true },
-  { value: "10%", label: "持股", achieved: true },
-  { value: "25%", label: "持股", achieved: false },
-  { value: "50%", label: "持股", achieved: false },
-  { value: "终极目标", label: "成为最大股东", achieved: false },
-];
+const toMilestones = (meta: MetaSummaryDTO | null): MilestoneItem[] =>
+  meta?.unlockedLegacies.map((legacy) => ({
+    value: `Q${legacy.earnedAtQuarter}`,
+    label: legacy.labelZh,
+    achieved: true,
+  })) ?? [];
 
 export const CompanySelectScreen = () => {
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
+  const [choices, setChoices] = useState<CompanyChoice[]>([]);
   const [isStarting, setIsStarting] = useState(false);
+  const [isLoadingTemplates, setIsLoadingTemplates] = useState(true);
+  const [metaSummary, setMetaSummary] = useState<MetaSummaryDTO | null>(null);
+  const [isLoadingMeta, setIsLoadingMeta] = useState(true);
   const startPendingRef = useRef(false);
   const replace = useScreenStore((state) => state.replace);
   const setChrome = useScreenStore((state) => state.setChrome);
@@ -78,7 +57,72 @@ export const CompanySelectScreen = () => {
     return () => setChrome({ hud: true, mainBar: true });
   }, [setChrome]);
 
-  const selectedChoice = COMPANY_CHOICES.find((choice) => choice.templateId === selectedTemplateId) ?? null;
+  useEffect(() => {
+    let cancelled = false;
+    setIsLoadingTemplates(true);
+    loadCompanyTemplates()
+      .then((templates) => {
+        if (cancelled) {
+          return;
+        }
+        const nextChoices = templates.map(toCompanyChoice);
+        setChoices(nextChoices);
+        setSelectedTemplateId((current) => current ?? nextChoices[0]?.templateId ?? null);
+      })
+      .catch((error: unknown) => {
+        if (cancelled) {
+          return;
+        }
+        pushToast({
+          id: `company-template-load-${Date.now()}`,
+          level: "error",
+          message: "公司模板加载失败",
+          hint: error instanceof Error ? error.message : "请检查后端配置",
+        });
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsLoadingTemplates(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [pushToast]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setIsLoadingMeta(true);
+    loadPlayerMeta()
+      .then((meta) => {
+        if (!cancelled) {
+          setMetaSummary(meta);
+        }
+      })
+      .catch((error: unknown) => {
+        if (cancelled) {
+          return;
+        }
+        pushToast({
+          id: `player-meta-load-${Date.now()}`,
+          level: "error",
+          message: "玩家进度加载失败",
+          hint: error instanceof Error ? error.message : "请检查后端配置",
+        });
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsLoadingMeta(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [pushToast]);
+
+  const selectedChoice = choices.find((choice) => choice.templateId === selectedTemplateId) ?? null;
+  const progressMeta = toProgressMeta(metaSummary);
+  const milestones = toMilestones(metaSummary);
 
   const showComingSoon = useCallback(
     (label: "查看规则" | "读取进度", idSuffix: string) => {
@@ -101,12 +145,7 @@ export const CompanySelectScreen = () => {
     setIsStarting(true);
 
     try {
-      await companySelectDataSource.send(
-        makeEnvelope("create_game", {
-          requestLegacies: true,
-          templateId: selectedChoice.templateId,
-        }),
-      );
+      await createGame(selectedChoice.templateId);
       replace("office");
     } catch (error) {
       startPendingRef.current = false;
@@ -147,7 +186,17 @@ export const CompanySelectScreen = () => {
             </header>
 
             <div className="grid min-h-0 flex-1 grid-cols-1 gap-px-md md:grid-cols-3">
-              {COMPANY_CHOICES.slice(0, 3).map((choice) => (
+              {isLoadingTemplates ? (
+                <div className="col-span-full flex items-center justify-center border-2 border-stroke-ink bg-panel px-px-md py-px-lg text-px-md text-ink-2">
+                  公司模板加载中
+                </div>
+              ) : null}
+              {!isLoadingTemplates && choices.length === 0 ? (
+                <div className="col-span-full flex items-center justify-center border-2 border-stroke-ink bg-panel px-px-md py-px-lg text-px-md text-ink-2">
+                  暂无可选公司
+                </div>
+              ) : null}
+              {choices.slice(0, 3).map((choice) => (
                 <CompanyChoiceCard
                   key={choice.templateId}
                   choice={choice}
@@ -159,11 +208,15 @@ export const CompanySelectScreen = () => {
           </div>
 
           <div className="min-h-0 lg:col-span-3">
-            <RevengeProgressPanel className="min-h-[480px]" meta={MOCK_META_PROGRESS} milestones={MILESTONES} />
+            {isLoadingMeta ? (
+              <div className="flex min-h-[480px] items-center justify-center border-2 border-stroke-ink bg-panel px-px-md py-px-lg text-px-md text-ink-2">
+                玩家进度加载中
+              </div>
+            ) : (
+              <RevengeProgressPanel className="min-h-[480px]" meta={progressMeta} milestones={milestones} />
+            )}
           </div>
         </section>
-
-        <ResourceShelf />
 
         <section className="relative flex min-h-[220px] shrink-0 flex-col justify-end gap-px-md lg:block lg:min-h-[172px]">
           <div className="max-w-[min(100%,420px)] lg:absolute lg:bottom-8 lg:left-0">

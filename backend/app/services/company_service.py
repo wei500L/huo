@@ -33,6 +33,7 @@ __all__ = ("CompanyService",)
 MarketMood = Literal["bull", "neutral", "bear", "crisis"]
 _SESSION_START = datetime(2026, 5, 23, 9, 0, 0)
 sample_company_template = content_registry.sample_company_template
+get_company_template_by_id = content_registry.get_company_template_by_id
 sample_employee_set = content_registry.sample_employee_set
 
 
@@ -54,13 +55,22 @@ class CompanyService:
         player_id: str | None = None,
         apply_legacies: bool = True,
         rng_seed: int | None = None,
+        company_template_id: str | None = None,
     ) -> GameSession:
         rng = self.rng_factory(rng_seed)
         if player_id is None:
             player_id = _uuid4_str(rng)
 
         try:
-            company_template = sample_company_template(rng.randrange(2**32))
+            company_template = (
+                get_company_template_by_id(company_template_id)
+                if company_template_id is not None
+                else sample_company_template(rng.randrange(2**32))
+            )
+            if company_template is None:
+                raise content_registry.ContentRegistryError(
+                    f"unknown company template: {company_template_id}"
+                )
             employee_templates = sample_employee_set(rng.randrange(2**32))
             company = _build_company(company_template, rng)
             employees = _build_employees(employee_templates, rng)

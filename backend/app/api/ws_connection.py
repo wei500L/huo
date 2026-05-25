@@ -25,6 +25,7 @@ from app.protocol import (
 from app.repo.protocols import GameSessionRepo, MetaProgressRepo
 from app.services import (
     DecisionNotFound,
+    CardNotInDraw,
     GossipServiceError,
     InsufficientAP,
     InvalidPhaseForDecision,
@@ -193,8 +194,13 @@ def _error_envelope(
     )
 
 
-def _ack_envelope(ack_for: str | None = None, reason: str | None = None) -> Envelope[BaseModel]:
-    return _wrap_outbound(AckPayload(ok=True, reason=reason), ack_for, type_name="ack")
+def _ack_envelope(
+    ack_for: str | None = None,
+    reason: str | None = None,
+    *,
+    type_name: str = "ack",
+) -> Envelope[BaseModel]:
+    return _wrap_outbound(AckPayload(ok=True, reason=reason), ack_for, type_name=type_name)
 
 
 def _ping_envelope() -> Envelope[BaseModel]:
@@ -233,6 +239,8 @@ def _map_exception(exc: Exception, ack_for: str | None = None) -> Envelope[BaseM
         return _error_envelope("session_not_found", "session not found", False, ack_for)
     if isinstance(exc, DecisionNotFound):
         return _error_envelope("session_not_found", "session not found", False, ack_for)
+    if isinstance(exc, CardNotInDraw):
+        return _error_envelope("card_not_in_draw", str(exc), False, ack_for)
     if isinstance(exc, GossipServiceError) and "session not found" in str(exc).lower():
         return _error_envelope("session_not_found", "session not found", False, ack_for)
     if isinstance(exc, PressInputServiceError) and "session not found" in str(exc).lower():

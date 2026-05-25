@@ -15,6 +15,7 @@ from app.services.press_input_service import (
     TranscriptRejected,
     WrongPressQuarter,
 )
+from app.services.quarter_state_machine import QuarterStateMachine
 from tests.factories import build_company, build_employee, build_quarter, build_stats
 
 
@@ -114,3 +115,20 @@ async def test_submit_persists_cleaned_press_input_and_flags() -> None:
     assert persisted.quarter.press_input.transcript.count("[品牌]") == 1
     assert persisted.quarter.press_input.flags == ["brand_replaced"]
     assert persisted.quarter.press_input.quarter == 3
+
+
+@pytest.mark.asyncio
+async def test_submit_with_state_machine_enters_settlement_phase() -> None:
+    repo = InMemoryGameSessionRepo()
+    session = await repo.create(_build_session())
+    service = PressInputService(repo, state_machine=QuarterStateMachine(repo))
+
+    await service.submit(
+        session.id,
+        PressType.CRISIS,
+        "我们会说明现金流和组织安排，并且会持续回应外界质疑，保证所有调整都能按计划执行。",
+    )
+
+    persisted = await repo.get(session.id)
+    assert persisted is not None
+    assert persisted.quarter.phase == QuarterPhase.SETTLEMENT

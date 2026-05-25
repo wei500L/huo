@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from "react";
 
 import { PixelButton, PixelIcon, PixelPortrait, PixelSpeechBubble } from "@/components/pixel";
+import { requestSnapshot, settleQuarter } from "@/net/gameClient";
 import { useGameStore } from "@/store/gameStore";
 import {
   selectCurrentQuarter,
@@ -42,6 +43,8 @@ export function SettlementScreen() {
   const replace = useScreenStore((state) => state.replace);
   const push = useScreenStore((state) => state.push);
   const setChrome = useScreenStore((state) => state.setChrome);
+  const setInflight = useGameStore((state) => state.setInflight);
+  const pushToast = useGameStore((state) => state.pushToast);
   const toastTimerRef = useRef<number | null>(null);
   const toastRaisedRef = useRef(false);
 
@@ -51,6 +54,33 @@ export function SettlementScreen() {
   }, [setChrome]);
 
   const isPending = inflight.settleQuarter && pendingSettlementBundle === null;
+
+  useEffect(() => {
+    if (
+      !snapshot?.sessionId ||
+      !quarter ||
+      quarter.phase !== "SETTLEMENT" ||
+      inflight.settleQuarter ||
+      pendingSettlementBundle
+    ) {
+      return;
+    }
+
+    setInflight("settleQuarter", true);
+    void settleQuarter({
+      sessionId: snapshot.sessionId,
+      quarterNumber: quarter.number,
+    }).catch((error: unknown) => {
+      setInflight("settleQuarter", false);
+      pushToast({
+        id: `settlement-start-${Date.now()}`,
+        level: "error",
+        message: "结算启动失败",
+        hint: error instanceof Error ? error.message : "请稍后重试",
+      });
+    });
+  }, [inflight.settleQuarter, pendingSettlementBundle, pushToast, quarter, setInflight, snapshot?.sessionId]);
+
   useEffect(() => {
     if (!isPending) {
       toastRaisedRef.current = false;
@@ -90,10 +120,14 @@ export function SettlementScreen() {
   const hasDeath = Boolean(pendingSettlementBundle?.death ?? pendingDeathBundle);
 
   const metricCards = useMemo(
-    () =>
-      METRIC_ORDER.map((metricKey) => {
-        const before = resolvedBefore?.[metricKey] ?? 0;
-        const after = resolvedAfter?.[metricKey] ?? before;
+    () => {
+      if (!resolvedBefore || !resolvedAfter) {
+        return [];
+      }
+
+      return METRIC_ORDER.map((metricKey) => {
+        const before = resolvedBefore[metricKey];
+        const after = resolvedAfter[metricKey];
         const status = resolveMetricStatus(metricKey, after - before);
 
         return (
@@ -108,7 +142,8 @@ export function SettlementScreen() {
             statusColor={status.color}
           />
         );
-      }),
+      });
+    },
     [resolvedAfter, resolvedBefore],
   );
 
@@ -123,36 +158,33 @@ export function SettlementScreen() {
   );
 
   const boardComments = useMemo(() => buildBoardComments(resolvedSettlement), [resolvedSettlement]);
-  const employeeGossipText = resolvedSettlement?.employeeGossip.line ?? "-";
+  const employeeGossipText = resolvedSettlement?.employeeGossip.line ?? "";
   const employeeGossipTone = resolveEmployeeGossipTone(resolvedSettlement?.employeeGossip.mood);
 
   const handleAdvanceQuarter = () => {
-    useGameStore.setState((state) => {
-      if (!state.snapshot) {
-        return {};
-      }
+    if (!snapshot?.sessionId) {
+      return;
+    }
 
-      return {
-        snapshot: {
-          ...state.snapshot,
-          stats: resolvedAfter ?? state.snapshot.stats,
-          quarter: {
-            ...state.snapshot.quarter,
-            number: state.snapshot.quarter.number + 1,
-            phase: "BRIEFING",
-            settlement: undefined,
-            pressBundle: undefined,
-            selectedDecisionId: undefined,
-            apRemaining: 3,
-          },
-        },
-        pendingSettlementBundle: null,
-        pendingDeathBundle: null,
-        pendingDecision: null,
-        pressBundle: null,
-      };
-    });
-    replace("office");
+    void requestSnapshot(snapshot.sessionId)
+      .then(() => {
+        useGameStore.setState({
+          pendingSettlementBundle: null,
+          pendingDeathBundle: null,
+          pendingDecision: null,
+          pressBundle: null,
+        });
+        const nextPhase = useGameStore.getState().snapshot?.quarter.phase;
+        replace(nextPhase === "GOSSIP" ? "gossip" : nextPhase === "DECISION" ? "decision" : "office");
+      })
+      .catch((error: unknown) => {
+        pushToast({
+          id: `settlement-next-${Date.now()}`,
+          level: "error",
+          message: "进入下一季度失败",
+          hint: error instanceof Error ? error.message : "请稍后重试",
+        });
+      });
   };
 
   if (isPending) {
@@ -188,14 +220,20 @@ export function SettlementScreen() {
 
         <main className="grid min-h-0 grid-cols-1 gap-px-lg lg:grid-cols-12">
           <section className="min-h-0 lg:col-span-7">
-            <div className="grid grid-cols-1 gap-px-md md:grid-cols-2">{metricCards}</div>
+            {metricCards.length > 0 ? (
+              <div className="grid grid-cols-1 gap-px-md md:grid-cols-2">{metricCards}</div>
+            ) : (
+              <div className="border-2 border-stroke-ink bg-panel px-px-md py-px-lg text-center text-px-md text-ink-2">
+                等待后端结算指标
+              </div>
+            )}
 
             <div className="mt-px-lg">
               <PromiseResultList items={promiseRows} />
             </div>
 
             <div className="mt-px-lg">
-              <MediaQuoteCard headline={resolvedPressHeadline?.headline ?? "-"} source={resolvedPressHeadline?.outlet ?? "-"} />
+              <MediaQuoteCard headline={resolvedPressHeadline?.headline} source={resolvedPressHeadline?.outlet} />
             </div>
           </section>
 
@@ -205,7 +243,13 @@ export function SettlementScreen() {
 
               <div className="border-2 border-stroke-ink bg-panel px-3 py-3 shadow-hard">
                 <div className="mb-2 font-retro text-[10px] leading-none text-ink-1">员工一句话</div>
-                <PixelSpeechBubble arrow="left" className="max-w-full" text={employeeGossipText} tone={employeeGossipTone} />
+                {employeeGossipText ? (
+                  <PixelSpeechBubble arrow="left" className="max-w-full" text={employeeGossipText} tone={employeeGossipTone} />
+                ) : (
+                  <div className="border-2 border-stroke-ink bg-panel-dim px-3 py-4 text-center text-px-sm text-ink-2">
+                    后端暂无员工反馈
+                  </div>
+                )}
               </div>
             </div>
           </aside>

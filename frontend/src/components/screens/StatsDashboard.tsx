@@ -15,8 +15,6 @@ import { MetricGrid } from "./stats/MetricGrid";
 import { RiskPanel } from "./stats/RiskPanel";
 import type { Risk } from "./stats/RiskCard";
 
-const FALLBACK_HINT = "老板，数据比表面看起来更危险...";
-
 const MAX_RISKS = 5;
 
 const trimDescription = (text: string): string => (text.length > 50 ? text.slice(0, 50) : text);
@@ -68,31 +66,6 @@ const buildRisks = (params: {
       }),
     );
   }
-
-  if (risks.length < 3) {
-    risks.push(
-      makeRisk({
-        id: "project-delay",
-        iconName: "trending-down",
-        title: "项目延期扩大",
-        description: "当前进度落后，排期一旦滑坡会连锁影响交付。",
-        level: "mid",
-      }),
-    );
-  }
-
-  if (risks.length < 3) {
-    risks.push(
-      makeRisk({
-        id: "market-heat",
-        iconName: "fire",
-        title: "市场热度波动",
-        description: "外部关注不稳定，容易把内部波动放大成舆情。",
-        level: "low",
-      }),
-    );
-  }
-
   return risks.slice(0, MAX_RISKS);
 };
 
@@ -110,20 +83,21 @@ export const StatsDashboard = () => {
     setChrome({ hud: true, mainBar: true });
   }, [setChrome]);
 
-  const resolvedStats = stats ?? { cash: 0, morale: 0, board: 0, face: 0 };
   const history = snapshot?.history ?? [];
 
   const risks = useMemo(
     () =>
-      buildRisks({
-        cash: resolvedStats.cash,
-        board: resolvedStats.board,
-        promiseLog,
-      }),
-    [promiseLog, resolvedStats.board, resolvedStats.cash],
+      stats
+        ? buildRisks({
+            cash: stats.cash,
+            board: stats.board,
+            promiseLog,
+          })
+        : [],
+    [promiseLog, stats],
   );
 
-  const hintText = hint.text || FALLBACK_HINT;
+  const hintText = hint.text;
 
   const handleViewAllRisks = () => {
     pushToast({
@@ -154,7 +128,13 @@ export const StatsDashboard = () => {
 
         <div className="grid min-h-0 flex-1 grid-cols-1 gap-px-md xl:grid-cols-[minmax(0,1.55fr)_minmax(300px,0.85fr)]">
           <div className="flex min-w-0 flex-col gap-px-md">
-            <MetricGrid stats={resolvedStats} history={history} company={company} />
+            {stats ? (
+              <MetricGrid stats={stats} history={history} company={company} />
+            ) : (
+              <div className="border-2 border-stroke-ink bg-panel px-px-md py-px-lg text-center text-px-md text-ink-2">
+                等待后端指标快照
+              </div>
+            )}
 
             <div className="grid min-h-0 gap-px-md lg:grid-cols-[minmax(120px,160px)_minmax(0,1fr)]">
               <div className="flex justify-center lg:justify-start">
@@ -162,9 +142,11 @@ export const StatsDashboard = () => {
               </div>
 
               <div className="flex min-h-[112px] items-end">
-                <div className="w-full max-w-[520px]">
-                  <PixelSpeechBubble tone="neutral" arrow="left" text={hintText} />
-                </div>
+                {hintText ? (
+                  <div className="w-full max-w-[520px]">
+                    <PixelSpeechBubble tone="neutral" arrow="left" text={hintText} />
+                  </div>
+                ) : null}
               </div>
             </div>
 

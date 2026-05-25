@@ -107,8 +107,9 @@ def get_gossip_service(
 
 def get_press_input_service(
     session_repo: GameSessionRepo = Depends(get_session_repo),
+    state_machine: QuarterStateMachine = Depends(get_quarter_state_machine),
 ) -> PressInputService:
-    return PressInputService(session_repo=session_repo)
+    return PressInputService(session_repo=session_repo, state_machine=state_machine)
 
 
 def get_director_resolver() -> DirectorResolver:

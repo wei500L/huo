@@ -1,5 +1,3 @@
-import { BRAND_BLACKLIST } from "./constants";
-
 export interface Props {
   value: string;
   onChange: (v: string) => void;
@@ -8,26 +6,6 @@ export interface Props {
 }
 
 const countUnits = (value: string): number => value.replace(/\s+/g, "").length;
-
-const normalize = (value: string): string => value.toLowerCase();
-
-const countBrandHits = (value: string): number => {
-  const source = normalize(value);
-  return BRAND_BLACKLIST.reduce((total, brand) => {
-    const needle = normalize(brand);
-    if (!needle) {
-      return total;
-    }
-
-    let count = 0;
-    let index = source.indexOf(needle);
-    while (index !== -1) {
-      count += 1;
-      index = source.indexOf(needle, index + needle.length);
-    }
-    return total + count;
-  }, 0);
-};
 
 const getToneClass = (count: number, minWords: number, maxWords: number): string => {
   if (count > maxWords) {
@@ -47,7 +25,6 @@ const getToneClass = (count: number, minWords: number, maxWords: number): string
 
 export function PressTranscriptInput({ value, onChange, minWords, maxWords }: Props) {
   const count = countUnits(value);
-  const brandHits = countBrandHits(value);
   const toneClass = getToneClass(count, minWords, maxWords);
   const statusLabel =
     count < minWords ? "再说点" : count > maxWords ? "超出上限" : count >= Math.max(minWords, Math.floor(maxWords * 0.9)) ? "接近上限" : "可提交";
@@ -79,10 +56,6 @@ export function PressTranscriptInput({ value, onChange, minWords, maxWords }: Pr
           </span>
           <span className="text-ink-2">{statusLabel}</span>
         </div>
-
-        {brandHits > 0 ? (
-          <p className="text-px-sm leading-none text-pixel-orange">已替换 {brandHits} 处敏感内容</p>
-        ) : null}
       </div>
     </section>
   );

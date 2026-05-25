@@ -43,6 +43,18 @@ export interface CompanyDTO {
   foundedYear: number;
 }
 
+export interface CompanyTemplateDTO {
+  templateId: string;
+  name: string;
+  namePool: string[];
+  business: string;
+  absurdity: number;
+  foundingMotto: string;
+  foundedYear: number;
+  startingPromises: string[];
+  deathCauses: DeathCauseDTO[];
+}
+
 export interface EmployeeDTO {
   id: string;
   name: string;
@@ -92,6 +104,15 @@ export interface PressInputDTO {
   wordCount: number;
   flags: string[];
   submittedAt: string;
+}
+
+export interface PressTypeDTO {
+  id: PressType;
+  titleZh: string;
+  triggerConditionText: string;
+  mustAnswerTopics: string[];
+  difficulty: number;
+  pressKeywords: string[];
 }
 
 export interface PressEvaluationDTO {

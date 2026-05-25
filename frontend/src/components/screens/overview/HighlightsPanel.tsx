@@ -20,17 +20,23 @@ export const HighlightsPanel = ({ items }: Props) => {
     <PixelCard kind="info" title="本周重点事项" className="h-full min-h-[320px]">
       <div className="flex h-full min-h-0 flex-col">
         <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-auto pr-px-xs">
-          {visibleItems.map((item) => (
-            <div key={item.title} className="flex items-start gap-3 border-2 border-stroke-ink bg-panel px-3 py-3">
-              <span className="flex h-5 w-5 shrink-0 items-center justify-center border border-stroke-ink bg-panel-dim">
-                <PixelIcon name={item.iconName} size={16} ariaLabel={item.title} />
-              </span>
-              <div className="min-w-0">
-                <div className="truncate text-px-sm leading-none text-ink-1">{item.title}</div>
-                <div className="mt-1 break-words text-px-xs leading-snug text-ink-2">{item.subtitle}</div>
+          {visibleItems.length > 0 ? (
+            visibleItems.map((item) => (
+              <div key={item.title} className="flex items-start gap-3 border-2 border-stroke-ink bg-panel px-3 py-3">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center border border-stroke-ink bg-panel-dim">
+                  <PixelIcon name={item.iconName} size={16} ariaLabel={item.title} />
+                </span>
+                <div className="min-w-0">
+                  <div className="truncate text-px-sm leading-none text-ink-1">{item.title}</div>
+                  <div className="mt-1 break-words text-px-xs leading-snug text-ink-2">{item.subtitle}</div>
+                </div>
               </div>
+            ))
+          ) : (
+            <div className="border-2 border-stroke-ink bg-panel-dim px-3 py-4 text-center text-px-sm leading-normal text-ink-2">
+              后端暂无重点事项
             </div>
-          ))}
+          )}
         </div>
 
         {hasMore ? (

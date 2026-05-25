@@ -115,7 +115,6 @@ async def test_realtime_operations_make_zero_llm_calls_until_settlement(
         )
 
         if quarter == 3:
-            await _assert_no_new_llm(state_machine.enter_press_phase(session.id), spy)
             await _assert_no_new_llm(
                 press_input_service.submit(
                     session.id,
@@ -125,9 +124,6 @@ async def test_realtime_operations_make_zero_llm_calls_until_settlement(
                 ),
                 spy,
             )
-            await _assert_no_new_llm(state_machine.enter_settlement_phase(session.id), spy)
-        else:
-            await _assert_no_new_llm(state_machine.enter_settlement_phase(session.id), spy)
 
         before_settlement = len(spy.calls)
         final_result = await orchestrator.settle_quarter(session.id)

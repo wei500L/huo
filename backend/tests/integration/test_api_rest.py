@@ -56,7 +56,9 @@ class _StableCompanyService:
         player_id: str | None = None,
         apply_legacies: bool = True,
         rng_seed: int | None = None,
+        company_template_id: str | None = None,
     ) -> GameSession:
+        del apply_legacies, rng_seed, company_template_id
         player = player_id or str(uuid4())
         session = _build_session(player)
         await self.meta_repo.get(player)
@@ -244,9 +246,6 @@ async def test_rest_endpoints_cover_core_flows(app_factory) -> None:
             assert select_response.status_code == 200
 
             if quarter_number == 3:
-                await client.post(
-                    f"/api/v1/games/{session_id}/state/transition", json={"target_phase": "PRESS"}
-                )
                 press_response = await client.post(
                     f"/api/v1/games/{session_id}/press",
                     json={
@@ -262,9 +261,6 @@ async def test_rest_endpoints_cover_core_flows(app_factory) -> None:
                 )
                 assert press_response.status_code == 200
 
-            await client.post(
-                f"/api/v1/games/{session_id}/state/transition", json={"target_phase": "SETTLEMENT"}
-            )
             settle_response = await client.post(
                 f"/api/v1/games/{session_id}/settlement",
                 json={

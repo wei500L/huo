@@ -11,11 +11,13 @@ from pydantic.alias_generators import to_camel
 __all__ = (
     "CollectGossip",
     "CreateGame",
+    "DrawDecisions",
     "InboundMessage",
     "Ping",
     "RequestSnapshot",
     "SelectDecision",
     "SettleQuarter",
+    "StateTransition",
     "SubmitPress",
 )
 
@@ -28,6 +30,19 @@ class CreateGame(_InboundBase):
     type: Literal["create_game"] = "create_game"
     player_id: str | None = None
     request_legacies: bool = True
+    company_template_id: str | None = None
+
+
+class StateTransition(_InboundBase):
+    type: Literal["state_transition"] = "state_transition"
+    session_id: str
+    target_phase: Literal["GOSSIP", "DECISION", "PRESS", "SETTLEMENT", "DONE"]
+
+
+class DrawDecisions(_InboundBase):
+    type: Literal["draw_decisions"] = "draw_decisions"
+    session_id: str
+    quarter_number: int = Field(ge=1, le=4)
 
 
 class SelectDecision(_InboundBase):
@@ -80,6 +95,8 @@ class Ping(_InboundBase):
 
 InboundMessage = Annotated[
     CreateGame
+    | StateTransition
+    | DrawDecisions
     | SelectDecision
     | CollectGossip
     | SubmitPress

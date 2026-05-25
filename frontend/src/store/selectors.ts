@@ -81,52 +81,6 @@ type MainActionBarSnapshot = GameSnapshotDTO & {
   };
 };
 
-const MAIN_ACTION_BAR_HINTS: Record<
-  "absent" | "active" | GameSnapshotDTO["quarter"]["phase"] | GameSnapshotDTO["status"],
-  MainActionBarContextHint
-> = {
-  absent: {
-    speaker: "advisor",
-    text: "TODO: 先把局面跑起来，别急着讲远景。",
-  },
-  active: {
-    speaker: "advisor",
-    text: "TODO: 记住，短期能活下去比长期叙事更重要。",
-  },
-  BRIEFING: {
-    speaker: "advisor",
-    text: "TODO: 先听风向，再定动作。",
-  },
-  GOSSIP: {
-    speaker: "employee_lin_xiaoman",
-    text: "TODO: 先听消息，再做决定。",
-  },
-  DECISION: {
-    speaker: "board_chairman",
-    text: "记住：短期能活下去，才有未来的赢家。",
-  },
-  PRESS: {
-    speaker: "ceo_male_02",
-    text: "TODO: 回答要短，别给媒体加戏。",
-  },
-  SETTLEMENT: {
-    speaker: "ceo_female_01",
-    text: "TODO: 先看账，再看口碑。",
-  },
-  DONE: {
-    speaker: "board_chairman",
-    text: "TODO: 结算后再开下一局。",
-  },
-  dead: {
-    speaker: "board_chairman",
-    text: "TODO: 先复盘，再开新局。",
-  },
-  won: {
-    speaker: "board_chairman",
-    text: "TODO: 先复盘，再开新局。",
-  },
-};
-
 const clampBadgeCount = (value: unknown): number => {
   if (typeof value !== "number" || !Number.isFinite(value)) {
     return 0;
@@ -176,12 +130,33 @@ export const selectMainActionBarBadgeCounts = (s: GameStoreState): MainActionBar
 export const selectMainActionBarContextHint = (s: GameStoreState): MainActionBarContextHint => {
   const snapshot = s.snapshot;
   if (!snapshot) {
-    return MAIN_ACTION_BAR_HINTS.absent;
+    return { text: "" };
   }
 
-  if (snapshot.status !== "active") {
-    return MAIN_ACTION_BAR_HINTS[snapshot.status];
+  if (snapshot.status === "dead") {
+    return { speaker: "board_chairman", text: s.pendingDeathBundle?.obituary ?? "" };
   }
 
-  return MAIN_ACTION_BAR_HINTS[snapshot.quarter.phase] ?? MAIN_ACTION_BAR_HINTS.active;
+  if (snapshot.status === "won") {
+    return { speaker: "board_chairman", text: snapshot.history.at(-1)?.settlementSummary ?? "" };
+  }
+
+  switch (snapshot.quarter.phase) {
+    case "BRIEFING":
+      return { speaker: "advisor", text: snapshot.quarter.briefing?.headlineHint ?? "" };
+    case "GOSSIP":
+      return { speaker: "employee_lin_xiaoman", text: s.latestGossipLead?.text ?? "" };
+    case "DECISION":
+      return { speaker: "board_chairman", text: s.pendingDecision?.flavor ?? "" };
+    case "PRESS":
+      return { speaker: "ceo_male_02", text: snapshot.quarter.pressInput?.mustAnswerTopics.join(" / ") ?? "" };
+    case "SETTLEMENT":
+    case "DONE":
+      return {
+        speaker: "ceo_female_01",
+        text: s.pendingSettlementBundle?.settlement.quarterReport ?? snapshot.quarter.settlement?.quarterReport ?? "",
+      };
+    default:
+      return { text: "" };
+  }
 };

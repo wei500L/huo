@@ -1,5 +1,3 @@
-import { PRESS_KEYWORDS } from "./constants";
-
 export interface MustAnswerPanelProps {
   items: string[];
   transcript?: string;
@@ -8,10 +6,9 @@ export interface MustAnswerPanelProps {
 const normalize = (value: string): string => value.toLowerCase().replace(/\s+/g, "");
 const CIRCLED = ["①", "②", "③"] as const;
 
-const isMatched = (item: string, transcript: string, index: number): boolean => {
+const isMatched = (item: string, transcript: string): boolean => {
   const source = normalize(transcript);
-  const keywords = PRESS_KEYWORDS[index] ?? [];
-  return keywords.some((keyword) => source.includes(normalize(keyword))) || source.includes(normalize(item));
+  return source.includes(normalize(item));
 };
 
 export function MustAnswerPanel({ items, transcript = "" }: MustAnswerPanelProps) {
@@ -23,7 +20,7 @@ export function MustAnswerPanel({ items, transcript = "" }: MustAnswerPanelProps
 
       <ol className="space-y-px-xs px-px-md py-px-md">
         {items.slice(0, 3).map((item, index) => {
-          const matched = isMatched(item, transcript, index);
+          const matched = isMatched(item, transcript);
           return (
             <li
               key={`${index}-${item}`}

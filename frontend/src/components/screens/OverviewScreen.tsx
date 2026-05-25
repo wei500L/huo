@@ -1,59 +1,68 @@
 import { useEffect } from "react";
 
-import { PixelPortrait, PixelSpeechBubble } from "@/components/pixel";
+import { PixelPortrait, PixelSpeechBubble, type IconName } from "@/components/pixel";
 import { useGameStore } from "@/store/gameStore";
+import { selectCurrentSnapshot } from "@/store/selectors";
 import { useScreenStore } from "@/store/screenStore";
 
 import { CompactMetricRow } from "./overview/CompactMetricRow";
-import { DepartmentCard } from "./overview/DepartmentCard";
-import { HighlightsPanel } from "./overview/HighlightsPanel";
+import { HighlightsPanel, type HighlightsItem } from "./overview/HighlightsPanel";
 import { SuggestedActions } from "./overview/SuggestedActions";
 import { TrendChartPanel } from "./overview/TrendChartPanel";
 
-const DEPARTMENTS = [
-  {
-    name: "产品部",
-    status: "stable" as const,
-    comment: "节奏正常，需求堆积偏多。",
-    suggestion: "先砍低优先级需求",
-    iconName: "briefcase" as const,
-  },
-  {
-    name: "市场部",
-    status: "tired" as const,
-    comment: "声量偏弱，曝光还不够。",
-    suggestion: "补一轮外部发声",
-    iconName: "megaphone" as const,
-  },
-  {
-    name: "技术部",
-    status: "healthy" as const,
-    comment: "交付稳，核心模块可控。",
-    suggestion: "保持现有排期",
-    iconName: "settings" as const,
-  },
-];
+const PHASE_SCREEN = {
+  BRIEFING: "office",
+  GOSSIP: "gossip",
+  DECISION: "decision",
+  PRESS: "press",
+  SETTLEMENT: "settlement",
+  DONE: "settlement",
+} as const;
 
-const HIGHLIGHTS = [
-  { iconName: "board" as const, title: "董事会信任持续下滑", subtitle: "本周沟通频率不足，反馈窗口收窄。" },
-  { iconName: "trending-up" as const, title: "市场热度偏低", subtitle: "外部关注没有跟上内部动作。" },
-  { iconName: "users" as const, title: "员工申请加班", subtitle: "内部压力上升，产出波动变大。" },
-  { iconName: "target" as const, title: "Q2 项目进度 62%", subtitle: "进度还在推进，但需要稳住节奏。" },
-];
+const buildHighlights = (snapshot: ReturnType<typeof selectCurrentSnapshot>): HighlightsItem[] => {
+  if (!snapshot) {
+    return [];
+  }
+
+  const items: HighlightsItem[] = [];
+  if (snapshot.quarter.briefing?.headlineHint) {
+    items.push({
+      iconName: "news" as IconName,
+      title: `Q${snapshot.quarter.number} 简报`,
+      subtitle: snapshot.quarter.briefing.headlineHint,
+    });
+  }
+
+  for (const cause of snapshot.company.deathCauses.slice(0, 2)) {
+    items.push({
+      iconName: "alarm" as IconName,
+      title: cause.category,
+      subtitle: cause.description,
+    });
+  }
+
+  for (const promise of snapshot.promiseLog.filter((item) => item.fulfilled === false).slice(0, 2)) {
+    items.push({
+      iconName: "check" as IconName,
+      title: `承诺未兑现 Q${promise.quarterMade}`,
+      subtitle: promise.text,
+    });
+  }
+
+  return items;
+};
 
 export const OverviewScreen = () => {
   const setChrome = useScreenStore((state) => state.setChrome);
   const push = useScreenStore((state) => state.push);
-  const pushToast = useGameStore((state) => state.pushToast);
+  const snapshot = useGameStore(selectCurrentSnapshot);
 
   useEffect(() => {
     setChrome({ hud: true, mainBar: true });
   }, [setChrome]);
 
-  const makeAction = (id: string, message: string, screen: "stats-dashboard" | "decision" | "press") => () => {
-    pushToast({ id, level: "info", message });
-    push(screen);
-  };
+  const highlights = buildHighlights(snapshot);
+  const phaseScreen = snapshot ? PHASE_SCREEN[snapshot.quarter.phase] : "office";
 
   return (
     <section className="flex h-full min-h-0 flex-col overflow-auto bg-canvas px-3 py-3 text-ink-1 sm:px-4 sm:py-4">
@@ -62,7 +71,9 @@ export const OverviewScreen = () => {
           <aside className="flex min-w-0 flex-col gap-4">
             <div className="border-2 border-stroke-ink bg-panel px-3 py-2 shadow-hard">
               <h1 className="text-px-xl leading-none text-ink-1">公司经营总览</h1>
-              <p className="mt-1 text-px-sm leading-snug text-ink-2">掌控六大核心指标，带领公司走向盈利与荣耀</p>
+              <p className="mt-1 text-px-sm leading-snug text-ink-2">
+                {snapshot ? snapshot.company.name : "等待后端公司快照"}
+              </p>
             </div>
 
             <div className="flex min-h-0 flex-1 flex-col items-center gap-4 overflow-hidden xl:items-start">
@@ -78,44 +89,40 @@ export const OverviewScreen = () => {
               </div>
 
               <div className="w-full max-w-[460px]">
-                <PixelSpeechBubble tone="neutral" arrow="none" text="这周最危险的是董事会信任下滑..." />
+                <PixelSpeechBubble
+                  tone="neutral"
+                  arrow="none"
+                  text={snapshot?.quarter.briefing?.headlineHint ?? snapshot?.company.foundingMotto ?? "等待后端简报"}
+                />
               </div>
             </div>
           </aside>
 
           <main className="flex min-w-0 flex-col gap-4">
-            <TrendChartPanel onViewReport={makeAction("overview-report-toast", "已打开详细报告", "stats-dashboard")} />
+            <TrendChartPanel onViewReport={() => push("stats-dashboard")} />
             <CompactMetricRow />
 
-            <div className="grid min-h-0 grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3">
-              {DEPARTMENTS.map((department) => (
-                <DepartmentCard key={department.name} {...department} />
-              ))}
+            <div className="border-2 border-stroke-ink bg-panel px-px-md py-px-lg text-center text-px-md leading-normal text-ink-2">
+              后端快照未提供部门状态
             </div>
           </main>
 
           <aside className="flex min-w-0 flex-col gap-4">
-            <HighlightsPanel items={HIGHLIGHTS} />
+            <HighlightsPanel items={highlights} />
             <div className="flex min-h-0 flex-1 flex-col">
               <SuggestedActions
                 items={[
                   {
                     color: "green",
-                    title: "稳住现金流",
-                    subtitle: "先守底线",
-                    onClick: makeAction("overview-cash-toast", "现金流已优先处理", "stats-dashboard"),
+                    title: "查看指标",
+                    subtitle: "来自后端快照",
+                    onClick: () => push("stats-dashboard"),
                   },
                   {
                     color: "blue",
-                    title: "处理董事会关系",
-                    subtitle: "主动汇报进度",
-                    onClick: makeAction("overview-board-toast", "董事会沟通已安排", "decision"),
-                  },
-                  {
-                    color: "red",
-                    title: "拉高市场热度",
-                    subtitle: "补一轮外部声量",
-                    onClick: makeAction("overview-market-toast", "市场动作已触发", "press"),
+                    title: "返回当前阶段",
+                    subtitle: snapshot?.quarter.phase ?? "等待后端阶段",
+                    onClick: () => push(phaseScreen),
                   },
                 ]}
               />

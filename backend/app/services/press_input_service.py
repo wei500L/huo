@@ -10,6 +10,7 @@ from app.content.press_types import get_press_type_by_id
 from app.domain import PressInput, PressType, QuarterPhase
 from app.repo.protocols import GameSession, GameSessionRepo
 from app.safety import clean_transcript
+from app.services.quarter_state_machine import QuarterStateMachine
 
 __all__ = (
     "InvalidPressPhase",
@@ -62,8 +63,13 @@ class SubmitPressResult(BaseModel):
 class PressInputService:
     """Store cleaned press transcripts on the session."""
 
-    def __init__(self, session_repo: GameSessionRepo) -> None:
+    def __init__(
+        self,
+        session_repo: GameSessionRepo,
+        state_machine: QuarterStateMachine | None = None,
+    ) -> None:
         self.session_repo = session_repo
+        self.state_machine = state_machine
 
     async def submit(
         self,
@@ -100,6 +106,8 @@ class PressInputService:
         updated_quarter = session.quarter.model_copy(update={"press_input": press_input})
         updated_session = session.model_copy(update={"quarter": updated_quarter})
         await self.session_repo.save(updated_session)
+        if self.state_machine is not None:
+            await self.state_machine.enter_settlement_phase(session_id)
 
         return SubmitPressResult(
             accepted=True,

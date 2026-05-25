@@ -132,6 +132,10 @@ class DecisionService:
         await self.session_repo.save(updated)
 
         should_enter_press = session.quarter.number == 3
+        if should_enter_press:
+            await self.state_machine.enter_press_phase(session.id)
+        else:
+            await self.state_machine.enter_settlement_phase(session.id)
         return DecisionResult(
             session_id=session.id,
             new_stats=new_stats,

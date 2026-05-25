@@ -89,6 +89,7 @@ async def test_select_decision_applies_immediate_effect() -> None:
     assert persisted is not None
     assert persisted.stats == result.new_stats
     assert persisted.quarter.selected_decision_id == card.id
+    assert persisted.quarter.phase == QuarterPhase.SETTLEMENT
 
 
 @pytest.mark.asyncio
@@ -262,6 +263,9 @@ async def test_quarter_three_result_points_to_press() -> None:
 
     assert result.should_enter_press is True
     assert result.next_phase_hint == "PRESS"
+    persisted = await repo.get(session.id)
+    assert persisted is not None
+    assert persisted.quarter.phase == QuarterPhase.PRESS
 
 
 def _build_service(repo: InMemoryGameSessionRepo) -> DecisionService:

@@ -76,16 +76,12 @@ async def test_full_loop_4q_reaches_won_with_mock_llm_only(
         selected_id = drawn.quarter.decision_cards[0].id
         await decision_service.select_decision(session.id, selected_id, rng_seed=quarter)
         if quarter == 3:
-            await state_machine.enter_press_phase(session.id)
             await press_input_service.submit(
                 session.id,
                 PressType.CRISIS,
                 "我们会持续回应市场关切，并明确现金流、组织调整和产品节奏的后续动作。",
                 duration_s=90,
             )
-            await state_machine.enter_settlement_phase(session.id)
-        else:
-            await state_machine.enter_settlement_phase(session.id)
 
         result = await orchestrator.settle_quarter(session.id)
         llm_calls_reported += result.llm_calls

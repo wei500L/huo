@@ -6,11 +6,11 @@ export interface CompanyChoice {
   templateId: string;
   name: string;
   business: string;
-  tag: "AI" | "游戏研发" | "工业科技" | "消费硬件";
+  tag: string;
   iconName: IconName;
   brandColor: "blue" | "green" | "purple" | "orange";
   description: string;
-  currentStakePercent: number;
+  currentStakePercent?: number;
 }
 
 interface CompanyChoiceCardProps {
@@ -41,7 +41,7 @@ export const CompanyChoiceCard = ({ choice, selected, onSelect }: CompanyChoiceC
         <div className="flex items-end justify-between gap-px-sm">
           <span className="text-px-sm leading-tight text-ink-2">当前个人持股</span>
           <span className={clsx("shrink-0 font-retro text-px-xxl leading-none", brandTextClass)}>
-            {formatStake(choice.currentStakePercent)}
+            {formatStake(choice.currentStakePercent ?? 0)}
           </span>
         </div>
       }

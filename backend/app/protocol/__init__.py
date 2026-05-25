@@ -4,11 +4,13 @@ from .envelope import AckPayload, Envelope, MessageDirection
 from .inbound import (
     CollectGossip,
     CreateGame,
+    DrawDecisions,
     InboundMessage,
     Ping,
     RequestSnapshot,
     SelectDecision,
     SettleQuarter,
+    StateTransition,
     SubmitPress,
 )
 from .outbound import (
@@ -57,6 +59,7 @@ __all__ = (
     "DeathReportBundle",
     "DecisionAck",
     "DecisionCardDTO",
+    "DrawDecisions",
     "EmployeeGossipDTO",
     "Envelope",
     "ErrorOutbound",
@@ -82,6 +85,7 @@ __all__ = (
     "SettlementBundle",
     "SettlementDTO",
     "SettleQuarter",
+    "StateTransition",
     "StatsDTO",
     "StatsDeltaDTO",
     "SubmitPress",

@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
 
 import { PixelPortrait, PixelSpeechBubble } from "@/components/pixel";
-import { createMockDataSource } from "@/net/mockAdapter";
-import { makeEnvelope } from "@/protocol/envelope";
+import { collectGossip } from "@/net/gameClient";
 import type { CollectGossipPayload } from "@/protocol/inbound";
 import type { GossipScene as GossipSceneName } from "@/protocol/types";
 import { useElementSize } from "@/hooks/useElementSize";
@@ -11,7 +10,6 @@ import {
   selectAPRemaining,
   selectCurrentQuarter,
   selectGossipNotes,
-  selectGossipTrust,
   selectInflight,
   selectLatestGossipLead,
   selectSessionId,
@@ -21,10 +19,7 @@ import { useScreenStore } from "@/store/screenStore";
 import { ActionPanel, type Action } from "./gossip/ActionPanel";
 import { GossipNotesDrawer } from "./gossip/GossipNotesDrawer";
 import { SceneStage } from "./gossip/SceneStage";
-import { TrustBar } from "./gossip/TrustBar";
 
-const LIN_XIAOMAN_ID = "employee_lin_xiaoman";
-const AP_TOTAL = 3;
 const DEFAULT_SCENE: GossipSceneName = "tearoom";
 const GOSSIP_SCENES = new Set<GossipSceneName>([
   "tearoom",
@@ -35,9 +30,6 @@ const GOSSIP_SCENES = new Set<GossipSceneName>([
   "smoking_area",
 ]);
 const INITIAL_GOSSIP_KEYS = new Set<string>();
-
-const dataSource = createMockDataSource();
-void dataSource.connect("gossip-ceo");
 
 export interface GossipSceneProps {
   scene?: unknown;
@@ -55,12 +47,9 @@ export function GossipScene({ scene }: GossipSceneProps) {
   const quarter = useGameStore(selectCurrentQuarter);
   const currentLead = useGameStore(selectLatestGossipLead);
   const notes = useGameStore(selectGossipNotes);
-  const trust = useGameStore(selectGossipTrust(LIN_XIAOMAN_ID));
   const apRemaining = useGameStore(selectAPRemaining) ?? 0;
   const inflight = useGameStore(selectInflight);
   const addGossipNote = useGameStore((state) => state.addGossipNote);
-  const spendGossipAP = useGameStore((state) => state.spendGossipAP);
-  const adjustGossipTrust = useGameStore((state) => state.adjustGossipTrust);
   const setInflight = useGameStore((state) => state.setInflight);
   const pushToast = useGameStore((state) => state.pushToast);
   const back = useScreenStore((state) => state.back);
@@ -88,7 +77,7 @@ export function GossipScene({ scene }: GossipSceneProps) {
     };
 
     setInflight("collectGossip", true);
-    void dataSource.send(makeEnvelope("collect_gossip", payload)).catch((error: unknown) => {
+    void collectGossip(payload).catch((error: unknown) => {
       setInflight("collectGossip", false);
       pushToast({
         id: crypto.randomUUID(),
@@ -130,7 +119,7 @@ export function GossipScene({ scene }: GossipSceneProps) {
   }, [apRemaining, pushToast, quarter]);
 
   const currentCost = Math.max(0, currentLead?.apCost ?? 1);
-  const canUseAPAction = apRemaining > 0 && Boolean(currentLead);
+  const speakerName = currentLead?.speakerId ?? "后端线索";
 
   const actions = useMemo<Action[]>(
     () => [
@@ -139,15 +128,14 @@ export function GossipScene({ scene }: GossipSceneProps) {
         label: "记下来",
         iconName: "save",
         variant: "blue",
-        apCost: currentCost,
-        disabled: !canUseAPAction,
+        apCost: 0,
+        disabled: !currentLead,
         onClick: () => {
           if (!currentLead) {
             return;
           }
 
           addGossipNote(currentLead);
-          spendGossipAP(currentLead.apCost);
         },
       },
       {
@@ -160,19 +148,6 @@ export function GossipScene({ scene }: GossipSceneProps) {
         onClick: sendCollectGossip,
       },
       {
-        id: "comfort",
-        label: "安抚情绪",
-        iconName: "heart",
-        variant: "orange",
-        apCost: currentCost,
-        disabled: !canUseAPAction,
-        onClick: () => {
-          // TODO 22: v1 only changes local trust; backend trust effects are not wired.
-          adjustGossipTrust(LIN_XIAOMAN_ID, 1);
-          spendGossipAP(currentCost);
-        },
-      },
-      {
         id: "leave",
         label: "离开",
         iconName: "back",
@@ -183,15 +158,12 @@ export function GossipScene({ scene }: GossipSceneProps) {
     ],
     [
       addGossipNote,
-      adjustGossipTrust,
       apRemaining,
       back,
-      canUseAPAction,
       currentCost,
       currentLead,
       inflight.collectGossip,
       sendCollectGossip,
-      spendGossipAP,
     ],
   );
 
@@ -214,25 +186,24 @@ export function GossipScene({ scene }: GossipSceneProps) {
                 bounce
                 className="drop-shadow-[4px_4px_0_var(--stroke-ink)]"
                 expression="smile"
-                id={LIN_XIAOMAN_ID}
+                id="employee_lin_xiaoman"
                 position="inline"
                 size="hero"
               />
               <div className="border-2 border-stroke-ink bg-panel px-px-md py-px-sm shadow-hard">
-                <div className="mb-px-sm text-px-md leading-none">林小满</div>
-                <TrustBar size="md" value={trust} />
+                <div className="text-px-md leading-none">{speakerName}</div>
               </div>
             </div>
 
             <div className="absolute right-[36px] top-[96px] z-10 w-[282px]">
-              <ActionPanel actions={actions} apRemaining={apRemaining} apTotal={AP_TOTAL} />
+              <ActionPanel actions={actions} apRemaining={apRemaining} />
             </div>
 
             <div className="absolute bottom-[28px] left-[384px] z-10 w-[560px]">
               <PixelSpeechBubble
                 arrow="left"
-                speaker={{ name: "林小满", role: "市场部专员" }}
-                text={currentLead?.text ?? "茶水间里有人压低了声音，新的传闻正在路上。"}
+                speaker={{ name: speakerName }}
+                text={currentLead?.text ?? "等待后端线索"}
                 tone="friendly"
                 typewriter={Boolean(currentLead)}
               />

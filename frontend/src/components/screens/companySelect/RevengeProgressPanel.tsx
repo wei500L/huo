@@ -5,10 +5,10 @@ import { PixelCard, PixelIcon } from "@/components/pixel";
 import { MilestoneList, type MilestoneItem } from "./MilestoneList";
 
 export interface RevengeProgressMeta {
-  reputation: number;
-  totalStakePercent: number;
+  totalRuns: number;
+  deathLogCount: number;
+  pressArchiveCount: number;
   unlockedCount: number;
-  totalUnlockCount: number;
 }
 
 interface RevengeProgressPanelProps {
@@ -21,10 +21,6 @@ const resolveNumber = (value: unknown): number => {
   return typeof value === "number" && Number.isFinite(value) ? value : 0;
 };
 
-const formatPercent = (value: number): string => {
-  return `${value.toLocaleString("zh-CN", { maximumFractionDigits: 1 })}%`;
-};
-
 const ProgressMetric = ({
   label,
   value,
@@ -33,7 +29,7 @@ const ProgressMetric = ({
 }: {
   label: string;
   value: string;
-  icon: "star" | "coins" | "unlock";
+  icon: "star" | "rip" | "unlock";
   tone: "blue" | "green" | "purple";
 }) => {
   const toneClass = {
@@ -57,10 +53,10 @@ const ProgressMetric = ({
 };
 
 export const RevengeProgressPanel = ({ meta, milestones, className }: RevengeProgressPanelProps) => {
-  const reputation = resolveNumber(meta?.reputation);
-  const totalStakePercent = resolveNumber(meta?.totalStakePercent);
+  const totalRuns = resolveNumber(meta?.totalRuns);
+  const deathLogCount = resolveNumber(meta?.deathLogCount);
+  const pressArchiveCount = resolveNumber(meta?.pressArchiveCount);
   const unlockedCount = resolveNumber(meta?.unlockedCount);
-  const totalUnlockCount = resolveNumber(meta?.totalUnlockCount);
 
   return (
     <PixelCard
@@ -73,21 +69,27 @@ export const RevengeProgressPanel = ({ meta, milestones, className }: RevengePro
         <div className="space-y-px-sm">
           <ProgressMetric
             icon="star"
-            label="总声望"
+            label="历史局数"
             tone="blue"
-            value={reputation.toLocaleString("zh-CN")}
+            value={totalRuns.toLocaleString("zh-CN")}
           />
           <ProgressMetric
-            icon="coins"
-            label="累计持股"
+            icon="rip"
+            label="死亡记录"
             tone="green"
-            value={formatPercent(totalStakePercent)}
+            value={deathLogCount.toLocaleString("zh-CN")}
           />
           <ProgressMetric
             icon="unlock"
             label="已解锁内容"
             tone="purple"
-            value={`${unlockedCount}/${totalUnlockCount}`}
+            value={unlockedCount.toLocaleString("zh-CN")}
+          />
+          <ProgressMetric
+            icon="star"
+            label="发布会档案"
+            tone="blue"
+            value={pressArchiveCount.toLocaleString("zh-CN")}
           />
         </div>
 
@@ -96,7 +98,13 @@ export const RevengeProgressPanel = ({ meta, milestones, className }: RevengePro
             <PixelIcon name="trophy" size={16} />
             <h2 className="text-px-md leading-tight">里程碑</h2>
           </div>
-          <MilestoneList items={milestones} />
+          {milestones.length > 0 ? (
+            <MilestoneList items={milestones} />
+          ) : (
+            <div className="border-2 border-stroke-ink bg-panel-dim px-px-sm py-px-md text-px-sm leading-normal text-ink-2">
+              暂无后端解锁记录
+            </div>
+          )}
         </div>
       </div>
     </PixelCard>
