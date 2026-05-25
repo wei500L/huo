@@ -7,6 +7,7 @@ import logging
 from datetime import UTC, datetime
 from typing import cast
 
+from app.config import Settings, get_settings
 from app.content.decisions import get_decision_card_by_id
 from app.domain import (
     DeathLogEntry,
@@ -20,9 +21,10 @@ from app.domain import (
     Stats,
     StatsDelta,
 )
-from app.llm._client_types import LLMClient, LLMRequest
+from app.llm._client_types import LLMClient, LLMError, LLMRequest
+from app.llm.client import retry_chat_complete
 from app.llm.fallback import STUB_DEATH_REPORT
-from app.llm.parser import parse_death_report, parse_with_fallback
+from app.llm.parser import ParseError, parse_death_report
 from app.llm.prompt_builder import PromptBuilder
 from app.protocol.outbound import DeathReportBundle
 from app.repo.protocols import GameSession, GameSessionRepo, MetaProgressRepo, PressArchiveRepo
@@ -31,7 +33,13 @@ from app.services.settlement_aggregator import SessionNotFound, SettlementContex
 
 logger = logging.getLogger(__name__)
 
-__all__ = ("DeathReportService", "DeathReportServiceError", "InvalidTerminalSession")
+__all__ = (
+    "DeathReportLLMError",
+    "DeathReportParseError",
+    "DeathReportService",
+    "DeathReportServiceError",
+    "InvalidTerminalSession",
+)
 
 _FORBIDDEN_OBITUARY_MARKERS = ("internal_eval", "internalEval", "hidden_secrets")
 _FALLBACK_HEADLINES = ("止血动作来得太晚", "组织信心持续下滑", "市场开始重新定价")
@@ -42,6 +50,14 @@ class DeathReportServiceError(Exception):
 
 
 class InvalidTerminalSession(DeathReportServiceError):
+    pass
+
+
+class DeathReportLLMError(DeathReportServiceError):
+    pass
+
+
+class DeathReportParseError(DeathReportServiceError):
     pass
 
 
@@ -61,6 +77,7 @@ class DeathReportService:
         prompt_builder: PromptBuilder,
         llm_client: LLMClient,
         legacy_resolver: LegacyResolver,
+        settings: Settings | None = None,
     ) -> None:
         self.session_repo = session_repo
         self.meta_repo = meta_repo
@@ -68,6 +85,7 @@ class DeathReportService:
         self.prompt_builder = prompt_builder
         self.llm_client = llm_client
         self.legacy_resolver = legacy_resolver
+        self.settings = settings or get_settings()
 
     async def generate(
         self,
@@ -88,30 +106,57 @@ class DeathReportService:
             ctx,
             cast(DeathReason, prompt_reason),
         )
-        raw_text = STUB_DEATH_REPORT
+        degraded = False
+        retry_count = 0
         try:
-            response = await self.llm_client.chat_complete(
+            response = await retry_chat_complete(
+                self.llm_client,
                 LLMRequest(
                     system=prompt.system,
                     user=prompt.user,
                     max_tokens=prompt.max_tokens,
                     temperature=prompt.temperature,
                     response_format_hint=prompt.response_format_hint,
-                )
+                    timeout_ms=self.settings.llm_timeout_ms,
+                ),
             )
             raw_text = response.raw_text
-        except Exception as exc:  # noqa: BLE001 - deterministic fallback is required here
+            retry_count = response.retry_count
+        except LLMError as exc:
             logger.warning(
-                "death report llm failed; using stub",
-                extra={"session_id": session_id, "error": repr(exc)},
+                "death report llm failed",
+                extra={
+                    "session_id": session_id,
+                    "prompt_kind": prompt.prompt_kind,
+                    "context_signature": prompt.context_signature,
+                    "error_type": type(exc).__name__,
+                },
             )
+            if not self._fallback_allowed():
+                raise DeathReportLLMError(f"death_report LLM call failed: {exc}") from exc
+            degraded = True
+            raw_text = STUB_DEATH_REPORT
+        except Exception as exc:
+            logger.exception(
+                "death report llm raised unexpected error",
+                extra={"session_id": session_id, "prompt_kind": prompt.prompt_kind},
+            )
+            if not self._fallback_allowed():
+                raise DeathReportLLMError(f"death_report LLM call failed: {exc}") from exc
+            degraded = True
+            raw_text = STUB_DEATH_REPORT
 
-        parsed = parse_with_fallback(
-            parse_death_report,
-            raw_text,
-            STUB_DEATH_REPORT,
-            {"session_id": session_id, "prompt_kind": "death_report"},
-        )
+        try:
+            parsed = parse_death_report(raw_text, allow_repair=degraded)
+        except ParseError as exc:
+            logger.warning(
+                "death report parse failed",
+                extra={"session_id": session_id, "prompt_kind": "death_report", "error": repr(exc)},
+            )
+            if not self._fallback_allowed():
+                raise DeathReportParseError(f"death_report parse failed: {exc}") from exc
+            degraded = True
+            parsed = parse_death_report(STUB_DEATH_REPORT, allow_repair=True)
         obituary = _clean_obituary(parsed.obituary)
         headlines = _normalize_headlines(parsed.headlines)
         last_employee = parsed.lastEmployee if isinstance(parsed.lastEmployee, dict) else None
@@ -155,7 +200,12 @@ class DeathReportService:
             styles_unlocked=evaluation.new_styles,
             last_employee_name=last_employee_name,
             last_employee_quote=last_employee_quote,
+            llm_degraded=degraded,
+            llm_retry_count=retry_count,
         )
+
+    def _fallback_allowed(self) -> bool:
+        return self.settings.env in {"dev", "test"} and self.settings.llm_allow_fallback
 
 
 def _prompt_reason(death_reason: DeathReason | None) -> object:
@@ -281,7 +331,7 @@ def _clean_obituary(obituary: str) -> str:
     if len(cleaned) > 500:
         cleaned = cleaned[:500]
     if len(cleaned) < 200:
-        fallback = parse_death_report(STUB_DEATH_REPORT).obituary
+        fallback = parse_death_report(STUB_DEATH_REPORT, allow_repair=True).obituary
         return fallback[:500]
     return cleaned
 

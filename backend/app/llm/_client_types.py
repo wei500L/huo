@@ -12,6 +12,7 @@ __all__ = (
     "FinishReason",
     "LLMClient",
     "LLMError",
+    "LLMConfigurationError",
     "LLMHttpError",
     "LLMRateLimited",
     "LLMRequest",
@@ -42,6 +43,8 @@ class LLMResponse(BaseModel):
     model: str | None = None
     finish_reason: FinishReason = "stop"
     latency_ms: int | None = None
+    attempts: int = 1
+    retry_count: int = 0
 
 
 class LLMError(Exception):
@@ -72,6 +75,11 @@ class LLMTimeoutError(LLMError):
     default_status_code = 408
     default_message = "request timed out"
     default_retryable = True
+
+
+class LLMConfigurationError(LLMError):
+    default_status_code = 500
+    default_message = "llm configuration missing"
 
 
 class LLMHttpError(LLMError):

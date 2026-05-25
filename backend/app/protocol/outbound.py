@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Literal
 
 from pydantic import Field
@@ -80,6 +81,7 @@ __all__ = (
     "RivalActionDTO",
     "SettlementBundle",
     "SettlementDTO",
+    "SettlementTaskUpdate",
     "StatsDTO",
     "StatsDeltaDTO",
     "Toast",
@@ -226,6 +228,8 @@ class DeathReportBundle(OutboundBase):
     headlines: list[str] = Field(default_factory=list)
     legacy_unlocks: list[LegacyUnlockDTO] = Field(default_factory=list)
     styles_unlocked: list[str] = Field(default_factory=list)
+    llm_degraded: bool = False
+    llm_retry_count: int = 0
 
     @classmethod
     def from_domain(
@@ -237,6 +241,8 @@ class DeathReportBundle(OutboundBase):
         styles_unlocked: list[ManagementStyle],
         last_employee_name: str | None,
         last_employee_quote: str | None,
+        llm_degraded: bool = False,
+        llm_retry_count: int = 0,
     ) -> DeathReportBundle:
         last_employee = None
         if last_employee_name is not None and last_employee_quote is not None:
@@ -249,7 +255,24 @@ class DeathReportBundle(OutboundBase):
             headlines=list(death_log_entry.headlines),
             legacy_unlocks=[LegacyUnlockDTO.from_domain(unlock) for unlock in legacy_unlocks],
             styles_unlocked=[style.value for style in styles_unlocked],
+            llm_degraded=llm_degraded,
+            llm_retry_count=llm_retry_count,
         )
+
+
+class SettlementTaskUpdate(OutboundBase):
+    task_id: str
+    session_id: str
+    quarter_number: int
+    prompt_kind: Literal["settlement", "director", "press_eval", "death_report"]
+    status: Literal["queued", "running", "completed", "failed", "degraded"]
+    queued_at: datetime
+    started_at: datetime | None = None
+    ended_at: datetime | None = None
+    duration_ms: int | None = None
+    retry_count: int = 0
+    error_type: str | None = None
+    error_message: str | None = None
 
 
 class Toast(OutboundBase):

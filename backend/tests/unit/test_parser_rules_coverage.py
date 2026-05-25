@@ -5,6 +5,7 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 import pytest
+
 from app.domain import PromiseTarget, Stats, StatsDelta
 from app.llm._parser_defaults import (
     canonical_death_base,
@@ -33,18 +34,18 @@ from app.llm.parser import (
     ParseError,
     ParseExtractionError,
     ParseSchemaError,
-    extract_json_block,
     _extract_or_raise,
     _fallback_obj,
     _validate,
+    extract_json_block,
     parse_death_report,
     parse_director,
     parse_press_eval,
     parse_with_fallback,
 )
+from app.llm.schema import PressEvalRaw
 from app.rules.director_resolver import DirectorResolver
 from app.rules.press_resolver import PressResolver
-from app.llm.schema import PressEvalRaw
 from tests.factories import build_press_input, build_promise, build_scheduled_event
 
 DIRECTOR_SCORES = {
@@ -116,9 +117,11 @@ def test_parser_and_normalizer_heal_payloads() -> None:
 
     assert extract_json_block("no json here") is None
     assert extract_json_block("{'a': 1}") == {"a": 1}
-    assert parse_director(director_text).marketSignal == "bear"
-    assert parse_press_eval(press_text).mediaAngle == "模糊带过"
-    assert len(parse_death_report(death_text).headlines) == 3
+    with pytest.raises(ParseSchemaError):
+        parse_director(director_text)
+    assert parse_director(director_text, allow_repair=True).marketSignal == "bear"
+    assert parse_press_eval(press_text, allow_repair=True).mediaAngle == "模糊带过"
+    assert len(parse_death_report(death_text, allow_repair=True).headlines) == 3
 
     with pytest.raises(ParseExtractionError):
         parse_director("plain text")

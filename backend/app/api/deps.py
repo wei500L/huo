@@ -7,7 +7,7 @@ from functools import lru_cache
 
 from fastapi import Depends
 
-from app.config import Settings, get_settings
+from app.config import get_settings
 from app.llm import LLMClient, PromptBuilder
 from app.llm import get_llm_client as build_llm_client
 from app.repo import protocols as repo_protocols
@@ -69,7 +69,8 @@ def get_agent_memory_repo() -> AgentMemoryRepo:
     return repo_protocols.get_agent_memory_repo()
 
 
-def get_llm_client(settings: Settings = Depends(get_settings)) -> LLMClient:
+def get_llm_client() -> LLMClient:
+    settings = get_settings()
     return build_llm_client(settings)
 
 
@@ -156,6 +157,7 @@ def get_settlement_orchestrator(
         director_resolver=director_resolver,
         press_resolver=press_resolver,
         state_machine=state_machine,
+        settings=get_settings(),
     )
 
 
@@ -178,6 +180,7 @@ def get_death_report_service(
         prompt_builder=prompt_builder,
         llm_client=llm_client,
         legacy_resolver=legacy_resolver,
+        settings=get_settings(),
     )
 
 

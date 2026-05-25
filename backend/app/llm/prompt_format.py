@@ -5,7 +5,16 @@ from __future__ import annotations
 import re
 from textwrap import indent
 
-from app.domain import DecisionCard, MemoryWindow, Promise, ScheduledEvent, Stats, StatsDelta
+from app.domain import (
+    DecisionCard,
+    Employee,
+    GossipLead,
+    MemoryWindow,
+    Promise,
+    ScheduledEvent,
+    Stats,
+    StatsDelta,
+)
 
 _ROLE_PREFIXES = ("system:", "assistant:", "user:", "tool:", "developer:")
 _COMMAND_PATTERNS = (
@@ -38,6 +47,22 @@ def _format_stats_trajectory(before: Stats, after: Stats) -> str:
     )
 
 
+def _format_company_brief(company_brief: dict[str, object]) -> str:
+    if not company_brief:
+        return "- none"
+    lines: list[str] = []
+    for key in ("name", "business", "founding_motto"):
+        value = company_brief.get(key)
+        if isinstance(value, str) and value.strip():
+            lines.append(f"- {key}: {_escape_user_input(value)}")
+    for key in ("deathCausesSummary", "hiddenRisks"):
+        values = company_brief.get(key)
+        if isinstance(values, list) and values:
+            text = " / ".join(_escape_user_input(str(item)) for item in values[:4])
+            lines.append(f"- {key}: {text}")
+    return "\n".join(lines) if lines else "- none"
+
+
 def _format_decision_card(card: DecisionCard) -> str:
     lines = [
         f"- id: {card.id}",
@@ -49,6 +74,44 @@ def _format_decision_card(card: DecisionCard) -> str:
     if card.long_term_hint is not None:
         lines.append(f"- long_term_hint: {_escape_user_input(card.long_term_hint)}")
     return "\n".join(lines)
+
+
+def _format_gossip_leads(leads: list[GossipLead]) -> str:
+    if not leads:
+        return "- none"
+    return "\n".join(
+        "- "
+        + " | ".join(
+            (
+                lead.id,
+                f"q{lead.quarter}",
+                lead.scene,
+                lead.reliability.value,
+                _escape_user_input(lead.text),
+            )
+        )
+        for lead in leads[:6]
+    )
+
+
+def _format_employees(employees: list[Employee]) -> str:
+    if not employees:
+        return "- none"
+    return "\n".join(
+        "- "
+        + " | ".join(
+            (
+                employee.id,
+                _escape_user_input(employee.name),
+                _escape_user_input(employee.role),
+                f"loyalty={employee.loyalty}",
+                f"stress={employee.stress}",
+                f"mood={employee.mood.value}",
+                f"goal={_escape_user_input(employee.current_goal or 'none')}",
+            )
+        )
+        for employee in employees[:8]
+    )
 
 
 def _format_memory_window(window: MemoryWindow) -> str:

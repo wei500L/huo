@@ -152,10 +152,23 @@ def test_websocket_settlement_and_reconnect(app_factory) -> None:
             )
         )
         queued = ws.receive_json()
-        assert queued["type"] == "toast"
+        assert queued["type"] == "settlement_task_update"
+        assert queued["payload"]["status"] == "queued"
+
+        running = ws.receive_json()
+        assert running["type"] == "settlement_task_update"
+        assert running["payload"]["status"] == "running"
 
         bundle = ws.receive_json()
         assert bundle["type"] == "settlement_bundle"
+
+        snapshot_or_done = ws.receive_json()
+        if snapshot_or_done["type"] == "game_snapshot":
+            completed = ws.receive_json()
+        else:
+            completed = snapshot_or_done
+        assert completed["type"] == "settlement_task_update"
+        assert completed["payload"]["status"] == "completed"
 
     with TestClient(app_factory) as client, client.websocket_connect(
         f"/api/v1/ws/{player_id}?session_id={session_id}"

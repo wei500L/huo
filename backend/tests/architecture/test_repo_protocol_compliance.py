@@ -166,14 +166,26 @@ def test_factories_switch_by_env(
     expected_archive: type[object],
     expected_memory: type[object],
 ) -> None:
+    llm_config = (
+        {
+            "llm_mode": "openai_compat",
+            "llm_endpoint": "https://llm.example.test/v1",
+            "llm_api_key": "secret",
+            "llm_model": "model-a",
+        }
+        if env == "prod"
+        else {
+            "llm_mode": "mock",
+            "llm_endpoint": None,
+            "llm_api_key": None,
+            "llm_model": None,
+        }
+    )
     settings = Settings(
         app_name="yes-boss-backend",
         env=env,  # type: ignore[arg-type]
         log_level="INFO",
-        llm_mode="mock",
-        llm_endpoint=None,
-        llm_api_key=None,
-        llm_model=None,
+        **llm_config,  # type: ignore[arg-type]
         llm_timeout_ms=15_000,
         settlement_max_concurrency=4,
     )

@@ -5,21 +5,23 @@ from __future__ import annotations
 import asyncio
 import logging
 from collections import Counter
+from collections.abc import Awaitable, Callable
 from time import perf_counter
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict
 
-from app.config import get_settings
+from app.config import Settings, get_settings
 from app.domain import DeathReason, HistoryEntry, PressBundle, Settlement, Stats
 from app.llm import (
     STUB_DIRECTOR,
     STUB_PRESS_EVAL,
     LLMClient,
+    LLMError,
     LLMRequest,
+    ParseError,
     parse_director,
     parse_press_eval,
-    parse_with_fallback,
     retry_chat_complete,
 )
 from app.llm.prompt_builder import PromptBuilder, PromptBundle
@@ -42,7 +44,13 @@ logger = logging.getLogger(__name__)
 __all__ = (
     "SettlementOrchestrator",
     "SettlementResult",
+    "SettlementError",
+    "SettlementLLMCallError",
+    "SettlementParseError",
+    "SettlementResolveError",
 )
+
+SettlementStatusCallback = Callable[[str], Awaitable[None]]
 
 
 class SettlementResult(BaseModel):
@@ -61,6 +69,44 @@ class SettlementResult(BaseModel):
     llm_degraded: bool = False
     latency_ms: int
     llm_calls: int
+    llm_retries: int = 0
+
+
+class SettlementError(Exception):
+    """Base class for settlement orchestration failures."""
+
+    error_type = "settlement_error"
+    retryable = False
+
+
+class SettlementLLMCallError(SettlementError):
+    error_type = "llm_call_failed"
+    retryable = True
+
+    def __init__(self, prompt_kind: str, exc: Exception) -> None:
+        self.prompt_kind = prompt_kind
+        self.original = exc
+        super().__init__(f"{prompt_kind} LLM call failed: {exc}")
+
+
+class SettlementParseError(SettlementError):
+    error_type = "llm_parse_failed"
+    retryable = True
+
+    def __init__(self, prompt_kind: str, exc: Exception) -> None:
+        self.prompt_kind = prompt_kind
+        self.original = exc
+        super().__init__(f"{prompt_kind} LLM output parse failed: {exc}")
+
+
+class SettlementResolveError(SettlementError):
+    error_type = "llm_resolver_failed"
+    retryable = False
+
+    def __init__(self, prompt_kind: str, exc: Exception) -> None:
+        self.prompt_kind = prompt_kind
+        self.original = exc
+        super().__init__(f"{prompt_kind} resolver failed: {exc}")
 
 
 class SettlementOrchestrator:
@@ -78,7 +124,9 @@ class SettlementOrchestrator:
         director_resolver: DirectorResolver,
         press_resolver: PressResolver,
         state_machine: QuarterStateMachine,
+        settings: Settings | None = None,
     ) -> None:
+        self.settings = settings or get_settings()
         self.session_repo = session_repo
         self.meta_repo = meta_repo
         self.press_archive_repo = press_archive_repo
@@ -91,16 +139,20 @@ class SettlementOrchestrator:
         self.state_machine = state_machine
         self._locks: dict[str, asyncio.Lock] = {}
         self._locks_guard = asyncio.Lock()
-        self._semaphore = asyncio.Semaphore(
-            max(1, get_settings().settlement_max_concurrency),
-        )
+        self._semaphore = asyncio.Semaphore(max(1, self.settings.settlement_max_concurrency))
         self._failure_counts: Counter[str] = Counter()
 
-    async def settle_quarter(self, session_id: str) -> SettlementResult:
+    async def settle_quarter(
+        self,
+        session_id: str,
+        status_callback: SettlementStatusCallback | None = None,
+    ) -> SettlementResult:
         start = perf_counter()
         async with self._semaphore:
             lock = await self._session_lock(session_id)
             async with lock:
+                if status_callback is not None:
+                    await status_callback("running")
                 return await self._settle_quarter_locked(session_id, start)
 
     async def _settle_quarter_locked(self, session_id: str, started_at: float) -> SettlementResult:
@@ -111,17 +163,25 @@ class SettlementOrchestrator:
         )
 
         director_prompt = self.prompt_builder.build_director_prompt(ctx)
-        director_resolution, llm_degraded = await self._resolve_director(ctx, director_prompt)
+        director_resolution, llm_degraded, director_retries = await self._resolve_director(
+            ctx,
+            director_prompt,
+        )
 
         press_bundle: PressBundle | None = None
         final_settlement = director_resolution.settlement
         llm_calls = 1
+        llm_retries = director_retries
 
         if ctx.press_input is not None:
             press_prompt = self.prompt_builder.build_press_eval_prompt(ctx)
-            press_resolution, press_degraded = await self._resolve_press(ctx, press_prompt)
+            press_resolution, press_degraded, press_retries = await self._resolve_press(
+                ctx,
+                press_prompt,
+            )
             llm_degraded = llm_degraded or press_degraded
             llm_calls = 2
+            llm_retries += press_retries
             combined_metrics_delta = director_resolution.settlement.metrics_delta.merge(
                 press_resolution.extra_metrics_delta,
             )
@@ -201,20 +261,22 @@ class SettlementOrchestrator:
             llm_degraded=llm_degraded,
             latency_ms=elapsed_ms,
             llm_calls=llm_calls,
+            llm_retries=llm_retries,
         )
 
     async def _resolve_director(
         self,
         ctx: Any,
         prompt: PromptBundle,
-    ) -> tuple[DirectorResolution, bool]:
+    ) -> tuple[DirectorResolution, bool, int]:
         log_context = {
             "session_id": ctx.session_id,
             "quarter": ctx.quarter_number,
             "prompt_kind": prompt.prompt_kind,
+            "context_signature": prompt.context_signature,
         }
         degraded = False
-        raw_text = STUB_DIRECTOR
+        retry_count = 0
         try:
             response = await retry_chat_complete(
                 self.llm_client,
@@ -223,40 +285,63 @@ class SettlementOrchestrator:
                     user=prompt.user,
                     max_tokens=prompt.max_tokens,
                     temperature=prompt.temperature,
+                    response_format_hint=prompt.response_format_hint,
+                    timeout_ms=self.settings.llm_timeout_ms,
                 ),
             )
             raw_text = response.raw_text
-        except Exception as exc:  # noqa: BLE001 - fallback to deterministic stub
-            degraded = True
+            retry_count = response.retry_count
+        except LLMError as exc:
             self._record_failure("director_llm", exc)
-            logger.warning("director llm failed; using stub", extra=log_context)
+            logger.warning(
+                "director llm failed",
+                extra={**log_context, "error_type": type(exc).__name__},
+            )
+            if not self._fallback_allowed():
+                raise SettlementLLMCallError(prompt.prompt_kind, exc) from exc
+            degraded = True
+            raw_text = STUB_DIRECTOR
+        except Exception as exc:
+            self._record_failure("director_llm_unexpected", exc)
+            logger.exception("director llm raised unexpected error", extra=log_context)
+            if not self._fallback_allowed():
+                raise SettlementLLMCallError(prompt.prompt_kind, exc) from exc
+            degraded = True
+            raw_text = STUB_DIRECTOR
 
         try:
-            parsed = parse_director(raw_text)
-        except Exception:
+            parsed = parse_director(raw_text, allow_repair=degraded)
+        except ParseError as exc:
+            self._record_failure("director_parse", exc)
+            logger.warning("director parse failed", extra={**log_context, "error": repr(exc)})
+            if not self._fallback_allowed():
+                raise SettlementParseError(prompt.prompt_kind, exc) from exc
             degraded = True
-            parsed = parse_with_fallback(parse_director, raw_text, STUB_DIRECTOR, log_context)
+            parsed = parse_director(STUB_DIRECTOR, allow_repair=True)
         try:
-            return self.director_resolver.resolve(ctx, parsed), degraded
-        except Exception as exc:  # noqa: BLE001 - deterministic fallback path
-            degraded = True
+            return self.director_resolver.resolve(ctx, parsed), degraded, retry_count
+        except Exception as exc:
             self._record_failure("director_resolve", exc)
-            logger.warning("director resolution failed; retrying with stub", extra=log_context)
-            parsed = parse_with_fallback(parse_director, STUB_DIRECTOR, STUB_DIRECTOR, log_context)
-            return self.director_resolver.resolve(ctx, parsed), degraded
+            logger.warning("director resolution failed", extra={**log_context, "error": repr(exc)})
+            if not self._fallback_allowed():
+                raise SettlementResolveError(prompt.prompt_kind, exc) from exc
+            degraded = True
+            parsed = parse_director(STUB_DIRECTOR, allow_repair=True)
+            return self.director_resolver.resolve(ctx, parsed), degraded, retry_count
 
     async def _resolve_press(
         self,
         ctx: Any,
         prompt: PromptBundle,
-    ) -> tuple[PressResolution, bool]:
+    ) -> tuple[PressResolution, bool, int]:
         log_context = {
             "session_id": ctx.session_id,
             "quarter": ctx.quarter_number,
             "prompt_kind": prompt.prompt_kind,
+            "context_signature": prompt.context_signature,
         }
         degraded = False
-        raw_text = STUB_PRESS_EVAL
+        retry_count = 0
         try:
             response = await retry_chat_complete(
                 self.llm_client,
@@ -265,32 +350,49 @@ class SettlementOrchestrator:
                     user=prompt.user,
                     max_tokens=prompt.max_tokens,
                     temperature=prompt.temperature,
+                    response_format_hint=prompt.response_format_hint,
+                    timeout_ms=self.settings.llm_timeout_ms,
                 ),
             )
             raw_text = response.raw_text
-        except Exception as exc:  # noqa: BLE001 - fallback to deterministic stub
-            degraded = True
+            retry_count = response.retry_count
+        except LLMError as exc:
             self._record_failure("press_llm", exc)
-            logger.warning("press llm failed; using stub", extra=log_context)
+            logger.warning(
+                "press llm failed",
+                extra={**log_context, "error_type": type(exc).__name__},
+            )
+            if not self._fallback_allowed():
+                raise SettlementLLMCallError(prompt.prompt_kind, exc) from exc
+            degraded = True
+            raw_text = STUB_PRESS_EVAL
+        except Exception as exc:
+            self._record_failure("press_llm_unexpected", exc)
+            logger.exception("press llm raised unexpected error", extra=log_context)
+            if not self._fallback_allowed():
+                raise SettlementLLMCallError(prompt.prompt_kind, exc) from exc
+            degraded = True
+            raw_text = STUB_PRESS_EVAL
 
         try:
-            parsed = parse_press_eval(raw_text)
-        except Exception:
+            parsed = parse_press_eval(raw_text, allow_repair=degraded)
+        except ParseError as exc:
+            self._record_failure("press_parse", exc)
+            logger.warning("press parse failed", extra={**log_context, "error": repr(exc)})
+            if not self._fallback_allowed():
+                raise SettlementParseError(prompt.prompt_kind, exc) from exc
             degraded = True
-            parsed = parse_with_fallback(parse_press_eval, raw_text, STUB_PRESS_EVAL, log_context)
+            parsed = parse_press_eval(STUB_PRESS_EVAL, allow_repair=True)
         try:
-            return self.press_resolver.resolve(ctx, parsed), degraded
-        except Exception as exc:  # noqa: BLE001 - deterministic fallback path
-            degraded = True
+            return self.press_resolver.resolve(ctx, parsed), degraded, retry_count
+        except Exception as exc:
             self._record_failure("press_resolve", exc)
-            logger.warning("press resolution failed; retrying with stub", extra=log_context)
-            parsed = parse_with_fallback(
-                parse_press_eval,
-                STUB_PRESS_EVAL,
-                STUB_PRESS_EVAL,
-                log_context,
-            )
-            return self.press_resolver.resolve(ctx, parsed), degraded
+            logger.warning("press resolution failed", extra={**log_context, "error": repr(exc)})
+            if not self._fallback_allowed():
+                raise SettlementResolveError(prompt.prompt_kind, exc) from exc
+            degraded = True
+            parsed = parse_press_eval(STUB_PRESS_EVAL, allow_repair=True)
+            return self.press_resolver.resolve(ctx, parsed), degraded, retry_count
 
     async def _session_lock(self, session_id: str) -> asyncio.Lock:
         async with self._locks_guard:
@@ -303,6 +405,9 @@ class SettlementOrchestrator:
     def _record_failure(self, category: str, exc: Exception) -> None:
         self._failure_counts[category] += 1
         logger.debug("settlement failure counted", extra={"category": category, "error": repr(exc)})
+
+    def _fallback_allowed(self) -> bool:
+        return self.settings.env in {"dev", "test"} and self.settings.llm_allow_fallback
 
 
 def _apply_promise_judgements(

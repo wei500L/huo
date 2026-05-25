@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import asyncio
+
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
@@ -17,6 +19,7 @@ from app.api.deps import (
     get_session_repo,
     get_settlement_orchestrator,
 )
+from app.config import Settings, get_settings
 from app.content import PRESS_TYPES, get_company_templates
 from app.domain import PressType, QuarterPhase
 from app.protocol import (
@@ -164,8 +167,12 @@ async def _settlement_bundle(
     session_id: str,
     payload: SettleQuarter,
     orchestrator: SettlementOrchestrator,
+    settings: Settings,
 ) -> SettlementBundle:
-    result = await orchestrator.settle_quarter(session_id)
+    result = await asyncio.wait_for(
+        orchestrator.settle_quarter(session_id),
+        timeout=settings.settlement_task_timeout_ms / 1000,
+    )
     return SettlementBundle.from_domain(
         session_id=result.session_id,
         quarter_number=payload.quarter_number,
@@ -288,8 +295,9 @@ async def settle_quarter(
     session_id: str,
     payload: SettleQuarter,
     orchestrator: SettlementOrchestrator = Depends(get_settlement_orchestrator),
+    settings: Settings = Depends(get_settings),
 ) -> SettlementBundle:
-    return await _settlement_bundle(session_id, payload, orchestrator)
+    return await _settlement_bundle(session_id, payload, orchestrator, settings)
 
 
 @router.post("/games/{session_id}/state/transition", response_model=GameSnapshot)

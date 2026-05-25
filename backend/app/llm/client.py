@@ -15,6 +15,7 @@ from app.config import Settings
 from ._client_types import (
     FinishReason,
     LLMClient,
+    LLMConfigurationError,
     LLMError,
     LLMHttpError,
     LLMRateLimited,
@@ -28,6 +29,7 @@ from .fallback import STUB_DEATH_REPORT, STUB_DIRECTOR, STUB_PRESS_EVAL, get_def
 
 __all__ = (
     "LLMClient",
+    "LLMConfigurationError",
     "LLMError",
     "LLMHttpError",
     "LLMRateLimited",
@@ -201,7 +203,8 @@ async def retry_chat_complete(
     current_request = request
     for attempt in range(max_attempts):
         try:
-            return await client.chat_complete(current_request)
+            response = await client.chat_complete(current_request)
+            return response.model_copy(update={"attempts": attempt + 1, "retry_count": attempt})
         except LLMError as exc:
             if not exc.retryable or attempt >= max_attempts - 1:
                 raise
@@ -215,6 +218,7 @@ def get_llm_client(settings: Settings) -> LLMClient:
 
     api_key = settings.llm_api_key.get_secret_value() if settings.llm_api_key else ""
     return _get_llm_client_cached(
+        settings.env,
         settings.llm_mode,
         settings.llm_endpoint or "",
         api_key,
@@ -224,19 +228,22 @@ def get_llm_client(settings: Settings) -> LLMClient:
 
 @lru_cache(maxsize=16)
 def _get_llm_client_cached(
+    env: Literal["dev", "test", "prod"],
     llm_mode: Literal["mock", "openai_compat"],
     llm_endpoint: str,
     llm_api_key: str,
     llm_model: str,
 ) -> LLMClient:
     if llm_mode == "mock":
+        if env not in {"dev", "test"}:
+            raise LLMConfigurationError(message="llm_mode=mock is not allowed outside dev/test")
         return MockLLMClient()
     if not llm_endpoint:
-        raise ValueError("llm_endpoint is required for openai_compat mode")
+        raise LLMConfigurationError(message="llm_endpoint is required for openai_compat mode")
     if not llm_api_key:
-        raise ValueError("llm_api_key is required for openai_compat mode")
+        raise LLMConfigurationError(message="llm_api_key is required for openai_compat mode")
     if not llm_model:
-        raise ValueError("llm_model is required for openai_compat mode")
+        raise LLMConfigurationError(message="llm_model is required for openai_compat mode")
     return OpenAICompatibleClient(
         endpoint=llm_endpoint,
         api_key=SecretStr(llm_api_key),

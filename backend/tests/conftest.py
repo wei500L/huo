@@ -49,7 +49,10 @@ def test_settings() -> Settings:
         llm_api_key=None,
         llm_model=None,
         llm_timeout_ms=15_000,
+        llm_allow_fallback=False,
         settlement_max_concurrency=4,
+        settlement_queue_max_size=64,
+        settlement_task_timeout_ms=45_000,
     )
 
 
@@ -150,7 +153,10 @@ def app_factory(monkeypatch: pytest.MonkeyPatch, test_settings: Settings):
     """Return an app built with injected test settings."""
 
     monkeypatch.setattr(config_module, "get_settings", lambda: test_settings)
-    return create_app()
+    monkeypatch.setattr(api_deps, "get_settings", lambda: test_settings)
+    app = create_app()
+    app.dependency_overrides[api_deps.get_settings] = lambda: test_settings
+    return app
 
 
 @pytest_asyncio.fixture

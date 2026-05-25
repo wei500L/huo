@@ -24,8 +24,10 @@ from app.protocol import (
 )
 from app.repo.protocols import GameSessionRepo, MetaProgressRepo
 from app.services import (
-    DecisionNotFound,
     CardNotInDraw,
+    DeathReportLLMError,
+    DeathReportParseError,
+    DecisionNotFound,
     GossipServiceError,
     InsufficientAP,
     InvalidPhaseForDecision,
@@ -33,6 +35,7 @@ from app.services import (
     InvalidPressPhase,
     PressInputServiceError,
     SessionNotFound,
+    SettlementError,
     StateMachineError,
     TranscriptRejected,
     WrongPressQuarter,
@@ -107,7 +110,12 @@ connection_manager = ConnectionManager()
 
 
 class InboundEnvelope(BaseModel):
-    model_config = ConfigDict(strict=True, extra="forbid", populate_by_name=True, alias_generator=to_camel)
+    model_config = ConfigDict(
+        strict=True,
+        extra="forbid",
+        populate_by_name=True,
+        alias_generator=to_camel,
+    )
 
     v: int = 1
     id: str = Field(default_factory=lambda: str(uuid4()))
@@ -235,6 +243,12 @@ def _invalid_message_error(ack_for: str | None = None) -> Envelope[BaseModel]:
 
 
 def _map_exception(exc: Exception, ack_for: str | None = None) -> Envelope[BaseModel]:
+    if exc.__class__.__name__ == "DuplicateSettlementInProgress":
+        return _error_envelope("duplicate_settlement", "settlement already running", True, ack_for)
+    if exc.__class__.__name__ == "SettlementQueueFull":
+        return _error_envelope("settlement_queue_full", "settlement queue is full", True, ack_for)
+    if exc.__class__.__name__ == "SettlementTaskTimedOut":
+        return _error_envelope("settlement_timeout", "settlement timed out", True, ack_for)
     if isinstance(exc, SessionNotFound):
         return _error_envelope("session_not_found", "session not found", False, ack_for)
     if isinstance(exc, DecisionNotFound):
@@ -267,4 +281,10 @@ def _map_exception(exc: Exception, ack_for: str | None = None) -> Envelope[BaseM
         )
         message = "session not found" if code == "session_not_found" else "illegal state transition"
         return _error_envelope(code, message, False, ack_for)
+    if isinstance(exc, DeathReportLLMError):
+        return _error_envelope("death_report_llm_failed", str(exc), True, ack_for)
+    if isinstance(exc, DeathReportParseError):
+        return _error_envelope("death_report_parse_failed", str(exc), True, ack_for)
+    if isinstance(exc, SettlementError):
+        return _error_envelope(exc.error_type, str(exc), exc.retryable, ack_for)
     return _error_envelope("internal_error", "internal server error", False, ack_for)

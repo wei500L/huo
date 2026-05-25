@@ -2,6 +2,7 @@
 
 from .client import (
     LLMClient,
+    LLMConfigurationError,
     LLMError,
     LLMHttpError,
     LLMRateLimited,
@@ -51,6 +52,7 @@ __all__ = (
     "DirectorRaw",
     "EmployeeGossipRaw",
     "LLMClient",
+    "LLMConfigurationError",
     "LLMError",
     "LLMHttpError",
     "LLMRateLimited",

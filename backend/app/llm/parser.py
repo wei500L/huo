@@ -59,29 +59,35 @@ def extract_json_block(text: str) -> dict[str, Any] | None:
     return None
 
 
-def parse_director(raw_text: str) -> DirectorRaw:
+def parse_director(raw_text: str, *, allow_repair: bool = False) -> DirectorRaw:
     obj = _extract_or_raise(raw_text)
     try:
         return _validate(DirectorRaw, obj)
     except ParseSchemaError:
+        if not allow_repair:
+            raise
         healed = normalize_director(obj, _fallback_obj(STUB_DIRECTOR))
         return _validate(DirectorRaw, healed)
 
 
-def parse_press_eval(raw_text: str) -> PressEvalRaw:
+def parse_press_eval(raw_text: str, *, allow_repair: bool = False) -> PressEvalRaw:
     obj = _extract_or_raise(raw_text)
     try:
         return _validate(PressEvalRaw, obj)
     except ParseSchemaError:
+        if not allow_repair:
+            raise
         healed = normalize_press_eval(obj, _fallback_obj(STUB_PRESS_EVAL))
         return _validate(PressEvalRaw, healed)
 
 
-def parse_death_report(raw_text: str) -> DeathReportRaw:
+def parse_death_report(raw_text: str, *, allow_repair: bool = False) -> DeathReportRaw:
     obj = _extract_or_raise(raw_text)
     try:
         return _validate(DeathReportRaw, obj)
     except ParseSchemaError:
+        if not allow_repair:
+            raise
         healed = normalize_death_report(obj, _fallback_obj(STUB_DEATH_REPORT))
         return _validate(DeathReportRaw, healed)
 

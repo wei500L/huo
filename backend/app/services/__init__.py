@@ -45,16 +45,27 @@ from .settlement_aggregator import (
 
 if TYPE_CHECKING:
     from .death_report_service import (
+        DeathReportLLMError,
+        DeathReportParseError,
         DeathReportService,
         DeathReportServiceError,
         InvalidTerminalSession,
     )
     from .legacy_resolver import LegacyEvaluation, LegacyResolver
-    from .settlement_orchestrator import SettlementOrchestrator, SettlementResult
+    from .settlement_orchestrator import (
+        SettlementError,
+        SettlementLLMCallError,
+        SettlementOrchestrator,
+        SettlementParseError,
+        SettlementResolveError,
+        SettlementResult,
+    )
 
 __all__ = (
     "CardNotInDraw",
     "CompanyService",
+    "DeathReportLLMError",
+    "DeathReportParseError",
     "DeathReportService",
     "DeathReportServiceError",
     "DecisionNotFound",
@@ -80,7 +91,11 @@ __all__ = (
     "SettlementAggregatorError",
     "SettlementContext",
     "SettlementInputAggregator",
+    "SettlementError",
+    "SettlementLLMCallError",
     "SettlementOrchestrator",
+    "SettlementParseError",
+    "SettlementResolveError",
     "SettlementResult",
     "QuarterStateMachine",
     "StateMachineError",
@@ -96,19 +111,31 @@ def __getattr__(name: str) -> object:
     if name in {
         "DeathReportService",
         "DeathReportServiceError",
+        "DeathReportLLMError",
+        "DeathReportParseError",
         "InvalidTerminalSession",
         "LegacyEvaluation",
         "LegacyResolver",
+        "SettlementError",
+        "SettlementLLMCallError",
         "SettlementOrchestrator",
+        "SettlementParseError",
+        "SettlementResolveError",
         "SettlementResult",
     }:
         module_name = {
             "DeathReportService": ".death_report_service",
             "DeathReportServiceError": ".death_report_service",
+            "DeathReportLLMError": ".death_report_service",
+            "DeathReportParseError": ".death_report_service",
             "InvalidTerminalSession": ".death_report_service",
             "LegacyEvaluation": ".legacy_resolver",
             "LegacyResolver": ".legacy_resolver",
+            "SettlementError": ".settlement_orchestrator",
+            "SettlementLLMCallError": ".settlement_orchestrator",
             "SettlementOrchestrator": ".settlement_orchestrator",
+            "SettlementParseError": ".settlement_orchestrator",
+            "SettlementResolveError": ".settlement_orchestrator",
             "SettlementResult": ".settlement_orchestrator",
         }[name]
         module = import_module(module_name, __name__)

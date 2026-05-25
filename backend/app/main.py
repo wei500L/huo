@@ -16,11 +16,13 @@ from app import config as config_module
 from app.api.health import router as health_router
 from app.api.rest import router as rest_router
 from app.api.ws import router as ws_router
-from app.llm import LLMTimeoutError
+from app.llm import LLMConfigurationError, LLMError, LLMTimeoutError
 from app.protocol import ErrorOutbound
 from app.services import (
-    DecisionNotFound,
     CardNotInDraw,
+    DeathReportLLMError,
+    DeathReportParseError,
+    DecisionNotFound,
     GossipServiceError,
     IllegalTransitionError,
     InsufficientAP,
@@ -31,6 +33,7 @@ from app.services import (
     NotInSettlementPhase,
     PressInputServiceError,
     SessionNotFound,
+    SettlementError,
     StateMachineError,
     TranscriptRejected,
     WrongPressQuarter,
@@ -105,6 +108,12 @@ def _register_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(GossipServiceError, _gossip_error)
     app.add_exception_handler(TranscriptRejected, _transcript_rejected)
     app.add_exception_handler(LLMTimeoutError, _llm_timeout)
+    app.add_exception_handler(LLMConfigurationError, _llm_configuration)
+    app.add_exception_handler(LLMError, _llm_error)
+    app.add_exception_handler(SettlementError, _settlement_error)
+    app.add_exception_handler(DeathReportLLMError, _death_report_llm_error)
+    app.add_exception_handler(DeathReportParseError, _death_report_parse_error)
+    app.add_exception_handler(TimeoutError, _settlement_timeout)
     app.add_exception_handler(RequestValidationError, _validation_error)
     app.add_exception_handler(ValidationError, _validation_error)
     app.add_exception_handler(Exception, _internal_error)
@@ -140,6 +149,33 @@ def _transcript_rejected(_: Request, exc: Exception) -> JSONResponse:
 
 def _llm_timeout(_: Request, exc: Exception) -> JSONResponse:
     return _json_error(503, "llm_timeout", str(exc), True)
+
+
+def _llm_configuration(_: Request, exc: Exception) -> JSONResponse:
+    return _json_error(500, "llm_configuration_missing", str(exc), False)
+
+
+def _llm_error(_: Request, exc: Exception) -> JSONResponse:
+    retryable = exc.retryable if isinstance(exc, LLMError) else False
+    return _json_error(503, _error_code(exc), str(exc), retryable)
+
+
+def _settlement_error(_: Request, exc: Exception) -> JSONResponse:
+    retryable = exc.retryable if isinstance(exc, SettlementError) else False
+    code = exc.error_type if isinstance(exc, SettlementError) else _error_code(exc)
+    return _json_error(503, code, str(exc), retryable)
+
+
+def _death_report_llm_error(_: Request, exc: Exception) -> JSONResponse:
+    return _json_error(503, "death_report_llm_failed", str(exc), True)
+
+
+def _death_report_parse_error(_: Request, exc: Exception) -> JSONResponse:
+    return _json_error(503, "death_report_parse_failed", str(exc), True)
+
+
+def _settlement_timeout(_: Request, exc: Exception) -> JSONResponse:
+    return _json_error(503, "settlement_timeout", "settlement timed out", True)
 
 
 def _validation_error(_: Request, exc: Exception) -> JSONResponse:
